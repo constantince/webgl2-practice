@@ -10,24 +10,32 @@
 <body onload="main()">
     <canvas id="happy-life-happy-code" width="500" height="500"></canvas>
 </body>
-<script src="../core/twgl.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
 <script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
 <script src="../core/gl-matrix.js" type="text/javascript"></script>
 <script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
-
-<script type="x-shader/x-vertex">
-    attribute vec4 a_position;
-    attribute vec4 a_color;
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
+    uniform mat4 u_matrix;
+    out vec4 v_color;
+    
     void main() {
-        gl_Position = a_position;
+        gl_Position = a_position * u_matrix;
+        v_color = a_color;
     }
 </script>
-<script type="x-shader/x-fragment">
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+    precision mediump float;
     uniform vec2 u_resolution;
     uniform float u_time;
     uniform vec2 u_mouse;
+    uniform vec4 u_colorMult;
+
+    in vec4 v_color;
+    out vec4 FragColor;
     void main() {
-        gl_FragColor = vec4(0.0);
+        FragColor = v_color;
     }
 </script>
 
