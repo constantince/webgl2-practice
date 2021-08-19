@@ -22,21 +22,22 @@
     out vec4 v_color;
     
     void main() {
-        gl_Position = a_position * u_matrix;
+        gl_Position = u_matrix * a_position;
         v_color = a_color;
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
-    precision mediump float;
-    uniform vec2 u_resolution;
-    uniform float u_time;
-    uniform vec2 u_mouse;
-    uniform vec4 u_colorMult;
-
+    precision highp float;
+    
+    // Passed in from the vertex shader.
     in vec4 v_color;
-    out vec4 FragColor;
+    
+    uniform vec4 u_colorMult;
+    
+    out vec4 outColor;
+    
     void main() {
-        FragColor = v_color;
+       outColor = v_color * u_colorMult;
     }
 </script>
 

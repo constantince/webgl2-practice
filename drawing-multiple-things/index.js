@@ -1,37 +1,26 @@
+function createShaderFromScript(scriptId) {
+  const shaderScript = document.getElementById(scriptId);
+  if (!shaderScript) {
+    throw ("*** Error: unknown script element" + scriptId);
+  } 
 
-var vs = `#version 300 es
+  const text = shaderScript.text;
+ 
 
-in vec4 a_position;
-in vec4 a_color;
-
-uniform mat4 u_matrix;
-
-out vec4 v_color;
-
-void main() {
-  // Multiply the position by the matrix.
-  gl_Position = u_matrix * a_position;
-
-  // Pass the color to the fragment shader.
-  v_color = a_color;
+  return text;
 }
-`;
 
-var fs = `#version 300 es
-precision highp float;
+function createShader(scriptIds) {
+  let shaders = [createShaderFromScript(scriptIds[0]), createShaderFromScript(scriptIds[1])];
 
-// Passed in from the vertex shader.
-in vec4 v_color;
+  if(shaders.length <= 1) {
+    console.warn("shaders text error", shaders)
+  }
 
-uniform vec4 u_colorMult;
-
-out vec4 outColor;
-
-void main() {
-   outColor = v_color * u_colorMult;
+  return shaders;
 }
-`;
 
+var fieldOfViewRadians = glMatrix.glMatrix.toRadian(60);
 
 function main() {
   // Get A WebGL context
@@ -46,14 +35,15 @@ function main() {
   // normal with a_normal etc..
   twgl.setAttributePrefix("a_");
 
-
-
+  
   var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 10, 12, 6);
   var cubeBufferInfo   = flattenedPrimitives.createCubeBufferInfo(gl, 20);
   var coneBufferInfo   = flattenedPrimitives.createTruncatedConeBufferInfo(gl, 10, 0, 20, 12, 1, true, false);
 
   // setup GLSL program
-  var programInfo = twgl.createProgramInfo(gl, [vs, fs]);;
+  var programInfo = twgl.createProgramInfo(gl, createShader(["vertex", "frag"]));
+
+  // console.log(programInfo);
 //   webgl.useProgram(program)
   var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
   var cubeVAO   = twgl.createVAOFromBufferInfo(gl, programInfo, cubeBufferInfo);
@@ -188,7 +178,12 @@ function main() {
     // twgl.drawBufferInfo(gl, coneBufferInfo);
 
     objectsToDraw.forEach(element => {
-      element.uniforms.u_matrix = createNewMatrix(canvas, element.translate, time * element.speedX, time * element.speedY);
+      element.uniforms.u_matrix = createNewMatrix(
+        canvas,
+        element.translate,
+        time * element.speedX,
+        time * element.speedY
+      );
 
       if(lastProgram !== element.programInfo.program) {
         gl.useProgram(element.programInfo.program);
@@ -233,4 +228,3 @@ function createNewMatrix(canvas, t, rx, ry) {
 
 }
 
-var fieldOfViewRadians = glMatrix.glMatrix.toRadian(60);
