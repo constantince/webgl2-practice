@@ -156,7 +156,7 @@ function main() {
     projHeight: 1,
   };
 
-  webglLessonsUI.setupUI(document.querySelector('#slider'), settings, [
+  webglLessonsUI.setupUI(document.querySelector('#ui'), settings, [
     { type: 'slider',   key: 'cameraX',    min: -10, max: 10, change: tick, precision: 2, step: 0.001, },
     { type: 'slider',   key: 'cameraY',    min:   1, max: 20, change: tick, precision: 2, step: 0.001, },
     { type: 'slider',   key: 'posX',       min: -10, max: 10, change: tick, precision: 2, step: 0.001, },
