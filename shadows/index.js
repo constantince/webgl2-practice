@@ -52,13 +52,13 @@ function main() {
 
   const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(
     gl,
-    2
+    1.5
   );
 
 
   const sphereVAOInfo = twgl.createVAOFromBufferInfo(gl, program, sphereBufferInfo);
   const planeVAOInfo = twgl.createVAOFromBufferInfo(gl, program, planeBufferInfo);
-  const cubeVAOInfo = twgl.createVAOFromBufferInfo()
+  const cubeVAOInfo = twgl.createVAOFromBufferInfo(gl, program, cubeBufferInfo);
   // make a 8x8 checkerboard texture
   const checkerboardTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, checkerboardTexture);
@@ -144,6 +144,15 @@ function main() {
         u_world: m4.translation(0.0, -1.0, 0.0)
       }));
       twgl.drawBufferInfo(gl, planeBufferInfo);
+
+
+      // draw cube
+      gl.bindVertexArray(cubeVAOInfo);
+      twgl.setUniforms(program, Object.assign({}, allUniforms, {
+        u_mulColor: [0.4, 0.8, 0.3, 1.0],
+        u_world: m4.translation(-4.0, 0.0, 2.0)
+      }));
+      twgl.drawBufferInfo(gl, cubeBufferInfo);
 
       // window.requestAnimationFrame(tick);
   }
