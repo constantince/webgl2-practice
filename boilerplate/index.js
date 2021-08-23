@@ -7,14 +7,14 @@ function getSourceFromScript(scriptId) {
     return text;
   }
   
-function createShaderFromScript(scriptIds) {
+function createShaderFromScript(gl, scriptIds) {
     let shaders = [getSourceFromScript(scriptIds[0]), getSourceFromScript(scriptIds[1])];
-
     if(shaders.length <= 1) {
-        console.warn("shaders text error", shaders)
+        console.warn("shaders text error", shaders);
     }
+    const program = twgl.createProgramInfo(gl, shaders);
 
-    return shaders;
+    return program;
 }
 function main() {
     const canvas = document.getElementById("happy-life-happy-code");
@@ -24,7 +24,7 @@ function main() {
 
     if( !gl ) return console.error("sorry, your browser does't not support webgl now!");
 
-    const program = twgl.createProgramInfo(gl, createShaderFromScript(["vertex", "frag"]));
+    const program = createShaderFromScript(gl, ["vertex", "frag"]);
     
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);

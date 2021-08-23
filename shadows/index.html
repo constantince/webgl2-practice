@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css" />
+    <title>WEBGL2</title>
+</head>
+<body onload="main()">
+    <canvas id="happy-life-happy-code" width="500" height="500"></canvas>
+    <div id="uiContainer">
+        <div id="ui"></div>
+    </div>
+    
+</body>
+<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
+<script src="../core/gl-matrix.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
+    in vec2 a_texcoord;
+    uniform mat4 u_projection;
+    uniform mat4 u_world;
+    uniform mat4 u_view;
+    uniform mat4 u_textureMatrix;
+    out vec4 v_color;
+    out vec2 v_coord;
+    out vec4 v_texturePosition;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+        v_coord = a_texcoord;
+        v_texturePosition = u_textureMatrix * u_world * a_position;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    in vec4 v_color;
+    in vec2 v_coord;
+    in vec4 v_texturePosition;
+
+    uniform sampler2D u_sampler;
+    uniform sampler2D u_texture;
+    uniform vec4 u_mulColor;
+    out vec4 FragColor;
+    void main() {
+        vec3 f = v_texturePosition.xyz / v_texturePosition.w;
+        bool iRange = f.x >=0.0 && f.x <=1.0 && f.y >= 0.0 && f.y <= 1.0;
+        float m = iRange ? 1.0 : 0.0;
+        vec4 fcolor = texture(u_texture, f.xy);
+        vec4 mcolor = texture(u_sampler, v_coord) * u_mulColor;
+        FragColor = mix(mcolor, fcolor, m);
+    }
+</script>
+
+<script type="text/javascript" src="./index.js"></script>
+</html>
