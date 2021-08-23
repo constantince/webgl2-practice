@@ -50,10 +50,15 @@ function main() {
     1
   );
 
+  const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(
+    gl,
+    2
+  );
+
 
   const sphereVAOInfo = twgl.createVAOFromBufferInfo(gl, program, sphereBufferInfo);
   const planeVAOInfo = twgl.createVAOFromBufferInfo(gl, program, planeBufferInfo);
-
+  const cubeVAOInfo = twgl.createVAOFromBufferInfo()
   // make a 8x8 checkerboard texture
   const checkerboardTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, checkerboardTexture);
