@@ -33,8 +33,45 @@ function main() {
 
   if( !gl ) return console.error("sorry, your browser does't not support webgl now!");
   twgl.setAttributePrefix("a_");
-  const program = twgl.createProgramInfo(gl, createShaderFromScript(["vertex", "frag"]));
 
+  const depthTexture = gl.createTexture();
+  const depthTextureSize = 512;
+  gl.bindTexture(gl.TEXTURE_2D, depthTexture);
+  gl.texImage2D(
+      gl.TEXTURE_2D,      // target
+      0,                  // mip level
+      gl.DEPTH_COMPONENT32F, // internal format
+      depthTextureSize,   // width
+      depthTextureSize,   // height
+      0,                  // border
+      gl.DEPTH_COMPONENT, // format
+      gl.FLOAT,           // type
+      null);              // data
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const depthFramebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
+  gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,       // target
+      gl.DEPTH_ATTACHMENT,  // attachment point
+      gl.TEXTURE_2D,        // texture target
+      depthTexture,         // texture
+      0);                   // mip level
+
+  const programOptions = {
+    attribLocations: {
+      'a_position': 0,
+      'a_normal':   1,
+      'a_texcoord': 2,
+      'a_color':    3,
+    },
+  };
+  const program = twgl.createProgramInfo(gl, createShaderFromScript(["vertex", "frag"]));
+  const frameProgram = twgl.createProgramInfo(gl, createShaderFromScript(["frame-vertex", "frame-frag"]), programOptions);
+  
   const sphereBufferInfo = twgl.primitives.createSphereBufferInfo(
       gl,
       1,
@@ -90,52 +127,31 @@ function main() {
     u_world: m4.identity(),
     u_mulColor: [0.7, .5, .6, 1.0],
     u_sampler: checkerboardTexture,
-    u_textureMatrix: m4.identity()
+    u_textureMatrix: m4.identity(),
+    u_texture: depthTexture
   } 
 
   const imageTexture = loadImageTexture('./f-texture.png');
 
- 
 
-  gl.enable(gl.DEPTH_TEST);
-  gl.enable(gl.CULL_FACE);
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  var tick = function() {
-      // console.log(settings);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  function drawSence(project, view, textureMatrix, program) {
+
+      // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      let viewMatrix = m4.inverse(view);
+
       gl.useProgram(program.program);
-
-      allUniforms.u_projection = m4.perspective(filedOfViewRadians, canvas.width / canvas.height, 1, 2000);
-      var matrix = m4.lookAt([settings.cameraX, settings.cameraY, 7], [0, 0, 0], [0, 1, 0])
-      allUniforms.u_view = m4.inverse(matrix);
-      allUniforms.u_texture = imageTexture;
-      var projection = m4.perspective(filedOfViewRadians, 1, 1, 100);
-
-      let textureWorldMatrix = m4.lookAt(
-        [settings.posX, settings.posY, settings.posZ],          // position
-        [settings.targetX, settings.targetY, settings.targetZ], // target
-        [0, 1, 0],                                              // up
-      );
-      textureWorldMatrix = m4.scale(
-          textureWorldMatrix,
-          settings.projWidth, settings.projHeight, 1,
-      );
-      // use the inverse of this world matrix to make
-      // a matrix that will transform other positions
-      // to be relative this this world space.
-      const textureMatrix = m4.inverse(textureWorldMatrix);
-      // console.log(settings.projWidth);
+      allUniforms.u_view = viewMatrix;
+      allUniforms.u_projection = project;
       allUniforms.u_textureMatrix = textureMatrix;
+      allUniforms.u_color = [1.0, 0.0, 0.0, 1.0];
+      // twgl.setUniforms(program, Object.assign(allUniforms, {
+      //   u_view: viewMatrix,
+      //   u_projection: project,
+      //   u_textureMatrix: textureMatrix,
+      //   u_projectedTexture: depthTexture,
+      // }));
 
-      // draw sphere
-      twgl.setUniforms(program, Object.assign(allUniforms, {
-        u_world: m4.translation(1, 0, 2)
-      }));
-
-      gl.bindVertexArray(sphereVAOInfo);
-      twgl.setUniforms(program, allUniforms);
-      twgl.drawBufferInfo(gl, sphereBufferInfo);
+      
 
       // draw plane
       gl.bindVertexArray(planeVAOInfo);
@@ -150,9 +166,76 @@ function main() {
       gl.bindVertexArray(cubeVAOInfo);
       twgl.setUniforms(program, Object.assign({}, allUniforms, {
         u_mulColor: [0.4, 0.8, 0.3, 1.0],
-        u_world: m4.translation(-4.0, 0.0, 2.0)
+        u_world: m4.translation(-4.0, 1.0, 2.0)
       }));
       twgl.drawBufferInfo(gl, cubeBufferInfo);
+
+
+      gl.bindVertexArray(sphereVAOInfo);
+       // draw sphere
+       twgl.setUniforms(program, Object.assign({}, allUniforms, {
+        // u_mulColor: [0.4, 0.8, 0.3, 1.0],
+        u_world: m4.translation(1.0, 2.0, 2.0)
+      }));
+      twgl.drawBufferInfo(gl, sphereBufferInfo);
+
+
+  }
+ 
+
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  var tick = function() {
+      console.log(settings.posX);
+      // gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      // gl.useProgram(program.program);
+
+  
+
+      let lightWorldMatrix = m4.lookAt(
+        [settings.posX, settings.posY, settings.posZ],          // position
+        [settings.targetX, settings.targetY, settings.targetZ], // target
+        [0, 1, 0],                                              // up
+      );
+      let lightProjectionMatrix = m4.perspective(filedOfViewRadians, canvas.width / canvas.height, 1, 2000);
+      
+      gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
+      gl.viewport(0, 0, depthTextureSize, depthTextureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      drawSence(lightProjectionMatrix, lightWorldMatrix, m4.identity(), frameProgram);
+      
+      
+      
+      let textureWorldMatrix = m4.identity();
+      textureWorldMatrix = m4.scale(
+          textureWorldMatrix,
+          settings.projWidth, settings.projHeight, 1,
+      );
+
+      textureWorldMatrix = m4.multiply(textureWorldMatrix, m4.multiply(lightProjectionMatrix, m4.inverse(lightWorldMatrix)));
+      // // use the inverse of this world matrix to make
+      // // a matrix that will transform other positions
+      // // to be relative this this world space.
+      // textureWorldMatrix = m4.multiply(textureWorldMatrix, m4.inverse(lightWorldMatrix));
+
+
+      // console.log(settings.projWidth);
+      // allUniforms.u_textureMatrix = textureWorldMatrix;
+   
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const projection = m4.perspective(filedOfViewRadians, canvas.width / canvas.height, 1, 2000);
+      var view = m4.lookAt([settings.cameraX, settings.cameraY, 7], [0, 0, 0], [0, 1, 0])
+      // const view = m4.inverse(matrix);
+      // allUniforms.u_texture = imageTexture;
+      // var projection = m4.perspective(filedOfViewRadians, 1, 1, 100);
+
+      drawSence(projection, view, textureWorldMatrix, program);
 
       // window.requestAnimationFrame(tick);
   }

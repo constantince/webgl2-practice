@@ -54,11 +54,35 @@
         vec3 f = v_texturePosition.xyz / v_texturePosition.w;
         bool iRange = f.x >=0.0 && f.x <=1.0 && f.y >= 0.0 && f.y <= 1.0;
         float m = iRange ? 1.0 : 0.0;
-        vec4 fcolor = texture(u_texture, f.xy);
+        vec4 fcolor = vec4(texture(u_texture, f.xy).rrr, 1.0);
         vec4 mcolor = texture(u_sampler, v_coord) * u_mulColor;
         FragColor = mix(mcolor, fcolor, m);
     }
 </script>
+<script type="x-shader/x-vertex" id="frame-vertex">#version 300 es
+    in vec4 a_position;
+
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+
+    void main() {
+    // Multiply the position by the matrices.
+    gl_Position = u_projection * u_view * u_world * a_position;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frame-frag">#version 300 es
+    precision highp float;
+
+    uniform vec4 u_color;
+    
+    out vec4 outColor;
+    
+    void main() {
+      outColor = u_color;
+    }
+</script>
+
 
 <script type="text/javascript" src="./index.js"></script>
 </html>
