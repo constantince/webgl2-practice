@@ -69,7 +69,7 @@ function main() {
       'a_color':    3,
     },
   };
-  const program = twgl.createProgramInfo(gl, createShaderFromScript(["vertex", "frag"]));
+  const program = twgl.createProgramInfo(gl, createShaderFromScript(["vertex", "frag"]), programOptions);
   const frameProgram = twgl.createProgramInfo(gl, createShaderFromScript(["frame-vertex", "frame-frag"]), programOptions);
   
   const sphereBufferInfo = twgl.primitives.createSphereBufferInfo(
@@ -128,22 +128,26 @@ function main() {
     u_mulColor: [0.7, .5, .6, 1.0],
     u_sampler: checkerboardTexture,
     u_textureMatrix: m4.identity(),
-    u_texture: depthTexture
+    u_texture: depthTexture,
+    u_bias: -0.006
   } 
 
   const imageTexture = loadImageTexture('./f-texture.png');
 
 
-  function drawSence(project, view, textureMatrix, program) {
+  function drawSence(project, view, textureMatrix, lightMatrix, program) {
 
       // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       let viewMatrix = m4.inverse(view);
 
       gl.useProgram(program.program);
+      allUniforms.u_viewPosition = viewMatrix.slice(12, 15);
       allUniforms.u_view = viewMatrix;
       allUniforms.u_projection = project;
       allUniforms.u_textureMatrix = textureMatrix;
-      allUniforms.u_color = [1.0, 0.0, 0.0, 1.0];
+      allUniforms.u_color = [1.0, 1.0, 1.0, 1.0];
+      allUniforms.u_lightDirection = lightMatrix.slice(8, 11).map(v => -v);
+      allUniforms.u_lightPosition = lightMatrix.slice(12, 15);
       // twgl.setUniforms(program, Object.assign(allUniforms, {
       //   u_view: viewMatrix,
       //   u_projection: project,
@@ -205,22 +209,15 @@ function main() {
       gl.viewport(0, 0, depthTextureSize, depthTextureSize);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      drawSence(lightProjectionMatrix, lightWorldMatrix, m4.identity(), frameProgram);
+      drawSence(lightProjectionMatrix, lightWorldMatrix, m4.identity(), lightWorldMatrix, frameProgram);
+      
+      allUniforms.u_shininess =  150,
+      allUniforms.u_innerLimit = Math.cos(degToRad(settings.fieldOfView / 2 - 10));
+      allUniforms.u_outerLimit = Math.cos(degToRad(settings.fieldOfView / 2));
       
       
       
-      let textureWorldMatrix = m4.identity();
-      textureWorldMatrix = m4.scale(
-          textureWorldMatrix,
-          settings.projWidth, settings.projHeight, 1,
-      );
-
-      textureWorldMatrix = m4.multiply(textureWorldMatrix, m4.multiply(lightProjectionMatrix, m4.inverse(lightWorldMatrix)));
-      // // use the inverse of this world matrix to make
-      // // a matrix that will transform other positions
-      // // to be relative this this world space.
-      // textureWorldMatrix = m4.multiply(textureWorldMatrix, m4.inverse(lightWorldMatrix));
-
+      
 
       // console.log(settings.projWidth);
       // allUniforms.u_textureMatrix = textureWorldMatrix;
@@ -229,13 +226,23 @@ function main() {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+      let textureMatrix = m4.identity();
+      textureMatrix = m4.translate(textureMatrix, 0.5, 0.5, 0.5);
+      textureMatrix = m4.scale(textureMatrix, 0.5, 0.5, 0.5);
+      textureMatrix = m4.multiply(textureMatrix, lightProjectionMatrix);
+      // use the inverse of this world matrix to make
+      // a matrix that will transform other positions
+      // to be relative this this world space.
+      textureMatrix = m4.multiply(
+          textureMatrix,
+          m4.inverse(lightWorldMatrix));
       const projection = m4.perspective(filedOfViewRadians, canvas.width / canvas.height, 1, 2000);
       var view = m4.lookAt([settings.cameraX, settings.cameraY, 7], [0, 0, 0], [0, 1, 0])
       // const view = m4.inverse(matrix);
       // allUniforms.u_texture = imageTexture;
       // var projection = m4.perspective(filedOfViewRadians, 1, 1, 100);
-
-      drawSence(projection, view, textureWorldMatrix, program);
+     
+      drawSence(projection, view, textureMatrix, lightWorldMatrix, program);
 
       // window.requestAnimationFrame(tick);
   }
