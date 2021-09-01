@@ -15,6 +15,7 @@
         <option value="frag-china">中国</option>
         <option value="frag-usa">美国</option>
         <option value="frag-germany">德国</option>
+        <option value="frag-france">法国</option>
         <option value="frag-japan">日本</option>
     </select>
 </body>
@@ -51,17 +52,17 @@
 
     float sdStar5(in vec2 p, in float r, in float rf, vec2 offset)
     {
-    p -= offset; // This will subtract offset.x from p.x and subtract offset.y from p.y
-    const vec2 k1 = vec2(0.809016994375, -0.587785252292);
-    const vec2 k2 = vec2(-k1.x,k1.y);
-    p.x = abs(p.x);
-    p -= 2.0*max(dot(k1,p),0.0)*k1;
-    p -= 2.0*max(dot(k2,p),0.0)*k2;
-    p.x = abs(p.x);
-    p.y -= r;
-    vec2 ba = rf*vec2(-k1.y,k1.x) - vec2(0,1);
-    float h = clamp( dot(p,ba)/dot(ba,ba), 0.0, r );
-    return length(p-ba*h) * sign(p.y*ba.x-p.x*ba.y);
+        p -= offset; // This will subtract offset.x from p.x and subtract offset.y from p.y
+        const vec2 k1 = vec2(0.809016994375, -0.587785252292);
+        const vec2 k2 = vec2(-k1.x,k1.y);
+        p.x = abs(p.x);
+        p -= 2.0*max(dot(k1,p),0.0)*k1;
+        p -= 2.0*max(dot(k2,p),0.0)*k2;
+        p.x = abs(p.x);
+        p.y -= r;
+        vec2 ba = rf*vec2(-k1.y,k1.x) - vec2(0,1);
+        float h = clamp( dot(p,ba)/dot(ba,ba), 0.0, r );
+        return length(p-ba*h) * sign(p.y*ba.x-p.x*ba.y);
     }
 
     float Start2(vec2 uv, vec2 num) {
@@ -182,13 +183,76 @@
 
 
 <script type="x-shader/x-fragment" id="frag-china">#version 300 es
+    #define RED             vec3(1.0, 0.0, 0.0)
+    #define YELLOW          vec3(1.0, 1.0, 0.0)
+
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    out vec4 FragColor;
+
+    float sdStar5(in vec2 p, in float r, in float rf, vec2 offset)
+    {
+        p -= offset; // This will subtract offset.x from p.x and subtract offset.y from p.y
+        const vec2 k1 = vec2(0.809016994375, -0.587785252292);
+        const vec2 k2 = vec2(-k1.x,k1.y);
+        p.x = abs(p.x);
+        p -= 2.0*max(dot(k1,p),0.0)*k1;
+        p -= 2.0*max(dot(k2,p),0.0)*k2;
+        p.x = abs(p.x);
+        p.y -= r;
+        vec2 ba = rf*vec2(-k1.y,k1.x) - vec2(0,1);
+        float h = clamp( dot(p,ba)/dot(ba,ba), 0.0, r );
+        return length(p-ba*h) * sign(p.y*ba.x-p.x*ba.y);
+    }
+
+    vec2 Remap(vec2 p, float t, float r, float b, float l) {
+        return vec2((p.x - l) / (r - l), (p.y - b) / (t - b));
+    }
+
+    void main() {
+        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+        vec3 bg = RED;
+
+        vec2 st = Remap(uv, 1.0, .5, .5, 0.0);
+        if(st.x >= 0.0 && st.x <=1.0 && st.y >=0.0 && st.y <= 1.0) {
+            bg = vec3(0.0);
+            float star = (1. - smoothstep(0., 0.005, sdStar5(st, .15, .45, vec2(0.3, 1.0 - 0.3))));
+            bg = mix(bg, YELLOW, star);
+        }
+        
+    
+
+        FragColor = vec4(bg, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="frag-france">#version 300 es
+    #define WHITE           vec3(1.0, 1.0, 1.0)
+    #define RED             vec3(178., 34., 52) / 255.
+    #define BLUE            vec3(60., 59.0, 110.0) /255.
+
     precision mediump float;
     uniform vec2 u_resolution;
     uniform float u_time;
     out vec4 FragColor;
 
     void main() {
-        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        const float ratio = 1.0 / 3.0;
+        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+        float w = fwidth(uv.y);
+        float t = uv.x * 7. - 2. * u_time + uv.y * 3.;
+        uv.y +=  sin( t ) * .05;
+
+        vec3 a = BLUE;
+        a = mix(a, WHITE, step(ratio, uv.x));
+
+        a = mix(a, RED, step(ratio * 2.0, uv.x));
+
+        a *= smoothstep(w, 0.0, abs(uv.y - .5) - .5 + w);
+        a *= .7 + cos(t) * .3;
+        
+        FragColor = vec4(a, 1.0);
     }
 </script>
 
