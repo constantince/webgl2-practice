@@ -38,6 +38,7 @@ function main() {
     countries["frag-japan"] = twgl.createProgramInfo(gl, ["vertex", "frag-japan"]);
     countries["frag-china"] = twgl.createProgramInfo(gl, ["vertex", "frag-china"]);
     countries["frag-france"] = twgl.createProgramInfo(gl, ["vertex", "frag-france"]);
+    countries["frag-english"] = twgl.createProgramInfo(gl, ["vertex", "frag-english"]);
     
     let program = countries[currentCountry];
 
