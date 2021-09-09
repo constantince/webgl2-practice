@@ -26,7 +26,7 @@ function main() {
       canvas.getContext("experimental-webgl");
     // let program = twgl.createProgramInfo(gl, ["vertex", "frag-usa"]);
     const selector = document.querySelector(".selector");
-    let currentCountry = "frag-china";
+    let currentCountry = "frag-korea";
     selector.addEventListener("change", (e) => {
       // const currentCountry = e.target.value;
       program = countries[e.target.value];
@@ -39,6 +39,7 @@ function main() {
     countries["frag-china"] = twgl.createProgramInfo(gl, ["vertex", "frag-china"]);
     countries["frag-france"] = twgl.createProgramInfo(gl, ["vertex", "frag-france"]);
     countries["frag-english"] = twgl.createProgramInfo(gl, ["vertex", "frag-english"]);
+    countries["frag-korea"] = twgl.createProgramInfo(gl, ["vertex", "frag-korea"]);
     
     let program = countries[currentCountry];
 
