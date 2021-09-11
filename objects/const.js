@@ -1,0 +1,20 @@
+const PLANECOLOR = [255 / 255, 255 / 255, 255 / 255, 1];
+const TORUSCOLOR = [255 / 255, 206 / 255, 109 / 255, 1];
+const SPHERECOLOR = [205 / 255, 206 / 255, 109 / 255, 1]
+const TILESAREA = 100;
+const TILE = 20;
+const CAMERAPOSITION = {
+    X: 8, Y: 15, Z: 8
+};
+
+const LIGHTORIGIN = [10, 15, 10];
+
+const AMBIENTCOLOR = [0.2, 0.2, 0.2, 1.0];
+const AMBIENTCOLORFACTOR = 1;
+
+const DIFFUSECOLOR = [0.5, 0.7, 1.0, 1.0];
+const DIFFUSECOLORFACTOR = 1;
+
+const SPECULARCOLOR = [];
+const SPECULARCOLORFACTOR = .9;
+const SHINESS = 100;
