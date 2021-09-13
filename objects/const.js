@@ -1,6 +1,7 @@
 const PLANECOLOR = [255 / 255, 255 / 255, 255 / 255, 1];
 const TORUSCOLOR = [255 / 255, 206 / 255, 109 / 255, 1];
-const SPHERECOLOR = [205 / 255, 206 / 255, 109 / 255, 1]
+const SPHERECOLOR = [205 / 255, 206 / 255, 109 / 255, 1];
+const CYLINDARCOLOR = [135 / 255, 186 / 255, 199 / 255, 1];
 const TILESAREA = 100;
 const TILE = 20;
 const CAMERAPOSITION = {
