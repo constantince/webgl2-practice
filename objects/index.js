@@ -33,6 +33,7 @@ function main() {
     twgl.setAttributePrefix("a_");
     const program = createShaderFromScript(gl, ["vertex", "frag"]);
     const programFrame = createShaderFromScript(gl, ['f-vertex', 'f-frag']);
+    const programShadow = createShaderFromScript(gl, ['shadow-vertex', 'shadow-frag']);
     gl.useProgram(program.program);
 
     const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, TILESAREA, TILESAREA);
@@ -49,7 +50,15 @@ function main() {
     // depth buffer
     const fb = makeBuffer(gl);
 
-    let U = getUniforms(gl);
+    // shadow buffer
+    const { depthFramebuffer, depthTexture} = makeShadowBuffer(gl)
+
+    let U = {
+      ...getUniforms(gl),
+      u_samplerShadow: depthTexture,
+      u_ambientFactor: 2.0,
+      u_color: [.85, .85, .85, 1.0]
+    }
 
     let mutipleThings = [
       {
@@ -103,53 +112,69 @@ function main() {
     var tick = function(time) {
        
         
-       
+        /*----------------- draw frame buffer---------------- */
         // draw depth buffer
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        // gl.viewport(0, 0, canvas_w, canvas_h);
+        // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // gl.useProgram(programFrame.program);
+        // mutipleThings.forEach((element, id) => {
+        //   let {uniforms, vao, buffer} = element;
+        //   uniforms.u_frameColor = [
+        //     ((id >>  0) & 0xFF) / 0xFF,
+        //     ((id >>  8) & 0xFF) / 0xFF,
+        //     ((id >> 16) & 0xFF) / 0xFF,
+        //     ((id >> 24) & 0xFF) / 0xFF
+        //   ];
+        //   twgl.setUniforms(programFrame, uniforms);
+        //   gl.bindVertexArray(vao);
+        //   twgl.drawBufferInfo(gl, buffer);
+        // });
+
+        // /*----------------- click objects ---------------- */
+        // if(clicked === true) {
+        //   const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
+        //   const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
+        //   const data = new Uint8Array(4);
+        //   gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+        //   const index = data[0];
+        //   let target = {name: null};
+        //   if(index > -1) {
+        //     target = mutipleThings[index];
+        //   }
+        //   console.log(target.name, 'was clicked');
+        //   clicked = false;
+        // }
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        /*----------------- draw shadows ---------------- */
+        gl.useProgram(programShadow.program);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
         gl.viewport(0, 0, canvas_w, canvas_h);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.useProgram(programFrame.program);
-        mutipleThings.forEach((element, id) => {
-          let {uniforms, vao, buffer} = element;
-          uniforms.u_frameColor = [
-            ((id >>  0) & 0xFF) / 0xFF,
-            ((id >>  8) & 0xFF) / 0xFF,
-            ((id >> 16) & 0xFF) / 0xFF,
-            ((id >> 24) & 0xFF) / 0xFF
-          ];
-          twgl.setUniforms(programFrame, uniforms);
-          gl.bindVertexArray(vao);
-          twgl.drawBufferInfo(gl, buffer);
+        
+        const shadowMatrix_projection = m4.perspective(fieldView, 1, ratio, 1000);
+        const shadowMatrix_view = m4.lookAt(LIGHTORIGIN, [0, 0, 0], [0, 1, 0]);
+        const shadowMatrix = m4.multiply(shadowMatrix_projection, m4.inverse(shadowMatrix_view));
+        U.u_shadowMatrix = shadowMatrix;
+        mutipleThings.forEach(element => {
+          twgl.setUniforms(programShadow, element.uniforms);
+          gl.bindVertexArray(element.vao);
+          twgl.drawBufferInfo(gl, element.buffer);
         });
-
-        if(clicked === true) {
-          const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
-          const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
-          const data = new Uint8Array(4);
-          gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-          const index = data[0];
-          let target = {name: null};
-          if(index > -1) {
-            target = mutipleThings[index];
-          }
-          console.log(target.name, 'was clicked');
-          clicked = false;
-        }
-
-
-
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        // draw color buffer
+
+        /*----------------- draw color buffer---------------- */
+        
         gl.useProgram(program.program);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.viewport(0, 0, canvas_w, canvas_h);
         U.u_perspective = m4.perspective(fieldView, 1, ratio, 1000);
         const la = m4.lookAt([Math.cos(time * .0001) * Math.PI * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * Math.PI * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
         // const la = m4.lookAt([CAMERAPOSITION.X, CAMERAPOSITION.Y, CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
         U.u_view = m4.inverse(la);
         // U.u_lightOrigin = [Math.cos(time * .0005) * 20, 15, Math.sin(time * .0005) * 20]
-        // draw plane
-        U.u_ambientFactor = 2.0;
-        U.u_color = [.85, .85, .85, 1.0];
+       
 
         mutipleThings.forEach(element => {
           twgl.setUniforms(program, element.uniforms);

@@ -24,16 +24,19 @@
     uniform mat4 u_perspective;
     uniform mat4 u_view;
     uniform mat4 u_world;
+    uniform mat4 u_shadowMatrix;
     out vec4 v_color;
     out vec2 v_texcoord;
     out vec3 v_normal;
     out vec4 v_worldMatrix;
+    out vec4 v_shadowPosition;
     void main() {
         gl_Position = u_perspective * u_view * u_world * a_position;
         v_color = a_color;
         v_texcoord = a_texcoord;
         v_normal = a_normal;
         v_worldMatrix = u_world * a_position;
+        v_shadowPosition = u_shadowMatrix * a_position;
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
@@ -44,6 +47,7 @@
     uniform vec4 u_color;
     uniform float u_nochessboard;
     uniform sampler2D u_sampler;
+    uniform sampler2D u_samplerShadow;
 
     uniform vec4 u_ambient;
     uniform float u_ambientFactor;
@@ -56,11 +60,12 @@
     in vec2 v_texcoord;
     in vec3 v_normal;
     in vec4 v_worldMatrix;
+    in vec4 v_shadowPosition;
     out vec4 FragColor;
 
     void main() {
         
-        
+        vec3 depth = v_shadowPosition.xyz / v_shadowPosition.w;
         vec4 ambient = u_ambient * u_ambientFactor * u_color;
         
         //<!-- if need... vec3 normal = u_normalMatrix * v_normal; -->
@@ -77,16 +82,22 @@
 
         vec4 col = diffuse + ambient + specular;
 
+        float shadowsDepth = texture(u_samplerShadow, depth.xy).r;
+        float colorDepth = depth.z;
 
+        //float inShadow = shadowsDepth >= colorDepth ? 1.0 : 0.6;
 
-        FragColor = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * vec4(vec3(0.5, 0.5, 1.0), 1.0);
+        col = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * vec4(vec3(0.5, 0.5, 1.0), 1.0);
+
+        bool iRange = depth.x >=0.0 && depth.x <=1.0 && depth.y >= 0.0 && depth.y <= 1.0;
+        float m = iRange && colorDepth <= shadowsDepth ? 1.0 : 0.5;
+        FragColor = vec4(col.rgb * m, 1.0);
 
 
 
        
     }
 </script>
-
 <script type="x-shader/x-vertex" id="f-vertex">#version 300 es
     layout(location = 0) in vec4 a_position;
     uniform mat4 u_perspective;
@@ -97,7 +108,6 @@
     }
 
 </script>
-
 <script type="x-shader/x-fragment" id="f-frag">#version 300 es
     precision mediump float;
     uniform vec4 u_frameColor;
@@ -106,6 +116,24 @@
         FragColor = u_frameColor;
     }
 </script>
+<script type="x-shader/x-fragment" id="shadow-vertex">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    uniform mat4 u_shadowMatrix;
+    void main() {
+        gl_Position = u_shadowMatrix * a_position;
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="shadow-frag">#version 300 es
+    precision mediump float;
+    out vec4 FragColor;
+
+    void main() {
+        FragColor = vec4(0.0);
+    }
+
+</script>
+
 <script type="text/javascript" src="./const.js"></script>
 <script type="text/javascript" src="./material.js"></script>
 <script type="text/javascript" src="./index.js"></script>
