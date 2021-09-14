@@ -47,6 +47,13 @@ function main() {
 
     const cylindarBufferInfo = twgl.primitives.createCylinderBufferInfo(gl, 2, 4, 255, 10);
     const cylindarVao = twgl.createVAOFromBufferInfo(gl, program, cylindarBufferInfo);
+
+    const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 4);
+    const cubeVao = twgl.createVAOFromBufferInfo(gl, program, cubeBufferInfo);
+
+    const cresentBufferInfo = twgl.primitives.createCresentBufferInfo(gl, 5, 7, 8, 1, 255);
+    const cresentVao = twgl.createVAOFromBufferInfo(gl, program, cresentBufferInfo);
+
     // depth buffer
     const fb = makeBuffer(gl);
 
@@ -67,7 +74,7 @@ function main() {
         vao: planeVAO,
         uniforms: U
       },
-      {
+      /*{
         name: "torus",
         buffer: torusBufferInfo,
         vao: torusVao,
@@ -96,8 +103,28 @@ function main() {
           u_color: CYLINDARCOLOR,
           u_world: m4.translate(m4.identity(), -8, 2, 0),
           u_ambientFactor: 1.0
-        }
       }
+      },*/
+      {
+        name: 'cube',
+        buffer: cubeBufferInfo,
+        vao: cubeVao,
+        uniforms: {
+          u_color: CUBECOLOR,
+          u_world: m4.translate(m4.identity(), 0, 2, -8),
+          u_ambientFactor: 1.0
+        }
+      },
+      // {
+      //   name: 'cresent',
+      //   buffer: cresentBufferInfo,
+      //   vao: cresentVao,
+      //   uniforms : {
+      //     u_color: CUBECOLOR,
+      //     u_world: m4.identity(),
+      //     u_ambientFactor: 1.0
+      //   }
+      // }
     ];
 
 
@@ -146,18 +173,26 @@ function main() {
         //   clicked = false;
         // }
         // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
+        U.u_lightOrigin = [Math.cos(time * .0005) * 20, 15, Math.sin(time * .0005) * 20];
+        // U.u_lightOrigin = LIGHTORIGIN;
         /*----------------- draw shadows ---------------- */
         gl.useProgram(programShadow.program);
         gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
         gl.viewport(0, 0, canvas_w, canvas_h);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         
-        const shadowMatrix_projection = m4.perspective(fieldView, 1, ratio, 1000);
-        const shadowMatrix_view = m4.lookAt(LIGHTORIGIN, [0, 0, 0], [0, 1, 0]);
+        const shadowMatrix_projection = m4.perspective(fieldView, ratio, 1, 1000);
+        const shadowMatrix_view = m4.lookAt(U.u_lightOrigin, [0, 0, 0], [0, 1, 0]);
         const shadowMatrix = m4.multiply(shadowMatrix_projection, m4.inverse(shadowMatrix_view));
         U.u_shadowMatrix = shadowMatrix;
         mutipleThings.forEach(element => {
+          // const u = element.uniforms.u_world;
+          // if( element.name === "cresent") {
+          //   const m = m4.translate(m4.identity(), 0, 2, 8);
+          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], Math.sin(angle(time * 0.01)) * 3.141592);
+          // } else {
+          //   element.uniforms.u_world = u;
+          // }
           twgl.setUniforms(programShadow, element.uniforms);
           gl.bindVertexArray(element.vao);
           twgl.drawBufferInfo(gl, element.buffer);
@@ -170,10 +205,15 @@ function main() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.viewport(0, 0, canvas_w, canvas_h);
         U.u_perspective = m4.perspective(fieldView, 1, ratio, 1000);
-        const la = m4.lookAt([Math.cos(time * .0001) * Math.PI * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * Math.PI * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
-        // const la = m4.lookAt([CAMERAPOSITION.X, CAMERAPOSITION.Y, CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
+        let newMatrix = m4.identity();
+        // newMatrix = m4.scale(newMatrix, .5, .5, .5);
+        // newMatrix = m4.translate(newMatrix, 1, 2, 1);
+        // newMatrix = m4.multiply(shadowMatrix, newMatrix);
+        U.u_shadowMatrix1 = shadowMatrix;
+        // const la = m4.lookAt([Math.cos(time * .0001) * Math.PI * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * Math.PI * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
+        const la = m4.lookAt([CAMERAPOSITION.X, CAMERAPOSITION.Y, CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
         U.u_view = m4.inverse(la);
-        // U.u_lightOrigin = [Math.cos(time * .0005) * 20, 15, Math.sin(time * .0005) * 20]
+       
        
 
         mutipleThings.forEach(element => {

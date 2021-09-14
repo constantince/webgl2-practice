@@ -24,7 +24,7 @@
     uniform mat4 u_perspective;
     uniform mat4 u_view;
     uniform mat4 u_world;
-    uniform mat4 u_shadowMatrix;
+    uniform mat4 u_shadowMatrix1;
     out vec4 v_color;
     out vec2 v_texcoord;
     out vec3 v_normal;
@@ -36,7 +36,7 @@
         v_texcoord = a_texcoord;
         v_normal = a_normal;
         v_worldMatrix = u_world * a_position;
-        v_shadowPosition = u_shadowMatrix * a_position;
+        v_shadowPosition = u_shadowMatrix1 * v_worldMatrix;
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
@@ -65,7 +65,7 @@
 
     void main() {
         
-        vec3 depth = v_shadowPosition.xyz / v_shadowPosition.w;
+        vec3 depth = (v_shadowPosition.xyz / v_shadowPosition.w) / 2.0 + 0.5;
         vec4 ambient = u_ambient * u_ambientFactor * u_color;
         
         //<!-- if need... vec3 normal = u_normalMatrix * v_normal; -->
@@ -83,14 +83,14 @@
         vec4 col = diffuse + ambient + specular;
 
         float shadowsDepth = texture(u_samplerShadow, depth.xy).r;
-        float colorDepth = depth.z;
+        float colorDepth = depth.z - 0.005;
 
         //float inShadow = shadowsDepth >= colorDepth ? 1.0 : 0.6;
 
         col = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * vec4(vec3(0.5, 0.5, 1.0), 1.0);
 
         bool iRange = depth.x >=0.0 && depth.x <=1.0 && depth.y >= 0.0 && depth.y <= 1.0;
-        float m = iRange && colorDepth <= shadowsDepth ? 1.0 : 0.5;
+        float m = (shadowsDepth > colorDepth) ? 1.0 : 0.3;
         FragColor = vec4(col.rgb * m, 1.0);
 
 
@@ -119,8 +119,9 @@
 <script type="x-shader/x-fragment" id="shadow-vertex">#version 300 es
     layout(location = 0) in vec4 a_position;
     uniform mat4 u_shadowMatrix;
+    uniform mat4 u_world;
     void main() {
-        gl_Position = u_shadowMatrix * a_position;
+        gl_Position = u_shadowMatrix * u_world * a_position;
     }
 </script>
 
@@ -129,7 +130,7 @@
     out vec4 FragColor;
 
     void main() {
-        FragColor = vec4(0.0);
+        FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
     }
 
 </script>

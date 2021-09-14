@@ -2,13 +2,14 @@ const PLANECOLOR = [255 / 255, 255 / 255, 255 / 255, 1];
 const TORUSCOLOR = [255 / 255, 206 / 255, 109 / 255, 1];
 const SPHERECOLOR = [205 / 255, 206 / 255, 109 / 255, 1];
 const CYLINDARCOLOR = [135 / 255, 186 / 255, 199 / 255, 1];
+const CUBECOLOR = [105 / 255, 116 / 255, 109 / 255, 1];
 const TILESAREA = 100;
 const TILE = 20;
 const CAMERAPOSITION = {
-    X: 8, Y: 15, Z: 8
+    X: 18, Y: 25, Z: 18
 };
 
-const LIGHTORIGIN = [5, 15, 5];
+const LIGHTORIGIN = [10, 16, -20];
 
 const AMBIENTCOLOR = [0.2, 0.2, 0.2, 1.0];
 const AMBIENTCOLORFACTOR = 1;
