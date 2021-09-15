@@ -8,6 +8,7 @@
     <title>WEBGL2</title>
 </head>
 <body onload="main()">
+    <div id="ui"></div>
     <canvas id="happy-life-happy-code" width="500" height="500"></canvas>
 </body>
 <script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
@@ -15,7 +16,7 @@
 <script src="../core/gl-matrix.js" type="text/javascript"></script>
 <script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
 <script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
-
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
 <script type="x-shader/x-vertex" id="vertex">#version 300 es
     layout(location = 0) in vec4 a_position;
     in vec4 a_color;
@@ -90,7 +91,7 @@
         col = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * vec4(vec3(0.5, 0.5, 1.0), 1.0);
 
         bool iRange = depth.x >=0.0 && depth.x <=1.0 && depth.y >= 0.0 && depth.y <= 1.0;
-        float m = (shadowsDepth > colorDepth) ? 1.0 : 0.3;
+        float m = (shadowsDepth > colorDepth) && iRange ? 1.0 : 0.3;
         FragColor = vec4(col.rgb * m, 1.0);
 
 
@@ -130,7 +131,7 @@
     out vec4 FragColor;
 
     void main() {
-        FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+        FragColor = vec4(1.0, 0.0, 0.0, 0.0);
     }
 
 </script>

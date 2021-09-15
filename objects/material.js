@@ -108,7 +108,7 @@ function makeBuffer(gl) {
 
 function makeShadowBuffer(gl) {
     const depthTexture = gl.createTexture();
-  const depthTextureSize = 512;
+  const depthTextureSize = 500;
   gl.bindTexture(gl.TEXTURE_2D, depthTexture);
   gl.texImage2D(
       gl.TEXTURE_2D,      // target
