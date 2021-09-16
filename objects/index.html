@@ -55,6 +55,7 @@
     uniform vec4 u_diffuse;
     uniform float u_diffuseFactor;
     uniform vec3 u_lightOrigin;
+    uniform mat4 u_normalMatrix;
     uniform float u_shiness;
 
     in vec4 v_color;
@@ -64,26 +65,33 @@
     in vec4 v_shadowPosition;
     out vec4 FragColor;
 
+    float unpackDepth(vec4 rgbaDepth) {
+        vec4 bitShift = vec4(1.0, 1.0 / 256.0, 1.0 / (256.0 * 256.0), 1.0 / (256.0 * 256.0 * 256.0));
+        float depth = dot(rgbaDepth, bitShift);
+        return depth;
+    }
+
     void main() {
         
         vec3 depth = (v_shadowPosition.xyz / v_shadowPosition.w) / 2.0 + 0.5;
         vec4 ambient = u_ambient * u_ambientFactor * u_color;
         
-        //<!-- if need... vec3 normal = u_normalMatrix * v_normal; -->
+        vec3 normal = mat3(u_normalMatrix) * v_normal;
         vec3 worldPosition = v_worldMatrix.xyz / v_worldMatrix.w;
         vec3 lightDirection = normalize(u_lightOrigin - worldPosition);
-        float fDot = max(dot(lightDirection, v_normal), 0.0);
+        float fDot = max(dot(lightDirection, normal), 0.0);
         vec4 diffuse = fDot * u_color;
 
 
-        vec3 reflectionDirection= normalize(reflect(v_normal, -lightDirection));
+        vec3 reflectionDirection= normalize(reflect(normal, -lightDirection));
         float sDot = max(dot(reflectionDirection, -normalize(worldPosition)), 0.0);
         float ssDot = pow(sDot, u_shiness);
         vec4 specular = ssDot * u_color;
 
         vec4 col = diffuse + ambient + specular;
 
-        float shadowsDepth = texture(u_samplerShadow, depth.xy).r;
+        vec4 shadowsDepth_x = texture(u_samplerShadow, depth.xy);
+        float shadowsDepth = unpackDepth(shadowsDepth_x);
         float colorDepth = depth.z - 0.005;
 
         //float inShadow = shadowsDepth >= colorDepth ? 1.0 : 0.6;
@@ -131,7 +139,7 @@
     out vec4 FragColor;
 
     void main() {
-        FragColor = vec4(1.0, 0.0, 0.0, 0.0);
+        FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
     }
 
 </script>

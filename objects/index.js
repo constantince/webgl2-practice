@@ -33,6 +33,7 @@ const settings = {
   projHeight: 1,
   perspective: true,
   fieldOfView: 120,
+  currentObject: null
 };
 
 function UI(render) {
@@ -96,7 +97,7 @@ function main() {
       ...getUniforms(gl),
       u_samplerShadow: depthTexture,
       u_ambientFactor: 2.0,
-      u_color: [.85, .85, .85, 1.0]
+      u_color: [.85, .85, .85, 1.0],
     }
 
     let mutipleThings = [
@@ -104,15 +105,17 @@ function main() {
         name: "floor",
         buffer: planeBufferInfo,
         vao: planeVAO,
+        world: m4.identity(),
         uniforms: U
       },
       {
         name: "torus",
         buffer: torusBufferInfo,
         vao: torusVao,
+        world: m4.translate(m4.identity(), 0, 2, 8),
         uniforms: {
           u_color: TORUSCOLOR,
-          u_world: m4.translate(m4.identity(), 0, 2, 0),
+          u_world: m4.identity(),
           u_nochessboard: 2.0,
           u_ambientFactor: 1.0
         }
@@ -121,9 +124,10 @@ function main() {
         name: "sphere",
         buffer: sphereBufferInfo,
         vao: sphereVao,
+        world: m4.translate(m4.identity(), 0, 2, 0),
         uniforms: {
           u_color: SPHERECOLOR,
-          u_world: m4.translate(m4.identity(), 8, 2, 0),
+          u_world: m4.identity(),
           u_ambientFactor: 1.0
         }
       },
@@ -131,9 +135,10 @@ function main() {
         name: "cylindar",
         buffer: cylindarBufferInfo,
         vao: cylindarVao,
+        world:  m4.translate(m4.identity(), -8, 3, 0),
         uniforms: {
           u_color: CYLINDARCOLOR,
-          u_world: m4.translate(m4.identity(), -8, 2, 0),
+          u_world: m4.identity(),
           u_ambientFactor: 1.0
       }
       },
@@ -141,9 +146,10 @@ function main() {
         name: 'cube',
         buffer: cubeBufferInfo,
         vao: cubeVao,
+        world: m4.translate(m4.identity(), 0, 2, -8),
         uniforms: {
           u_color: CUBECOLOR,
-          u_world: m4.translate(m4.identity(), 0, 2, -8),
+          u_world: m4.identity(),
           u_ambientFactor: 1.0
         }
       },
@@ -173,40 +179,43 @@ function main() {
         
         /*----------------- draw frame buffer---------------- */
         // draw depth buffer
-        // gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-        // gl.viewport(0, 0, canvas_w, canvas_h);
-        // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        // gl.useProgram(programFrame.program);
-        // mutipleThings.forEach((element, id) => {
-        //   let {uniforms, vao, buffer} = element;
-        //   uniforms.u_frameColor = [
-        //     ((id >>  0) & 0xFF) / 0xFF,
-        //     ((id >>  8) & 0xFF) / 0xFF,
-        //     ((id >> 16) & 0xFF) / 0xFF,
-        //     ((id >> 24) & 0xFF) / 0xFF
-        //   ];
-        //   twgl.setUniforms(programFrame, uniforms);
-        //   gl.bindVertexArray(vao);
-        //   twgl.drawBufferInfo(gl, buffer);
-        // });
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.viewport(0, 0, canvas_w, canvas_h);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.useProgram(programFrame.program);
+        mutipleThings.forEach((element, id) => {
+          let {uniforms, vao, buffer} = element;
+          uniforms.u_frameColor = [
+            ((id >>  0) & 0xFF) / 0xFF,
+            ((id >>  8) & 0xFF) / 0xFF,
+            ((id >> 16) & 0xFF) / 0xFF,
+            ((id >> 24) & 0xFF) / 0xFF
+          ];
+          twgl.setUniforms(programFrame, uniforms);
+          gl.bindVertexArray(vao);
+          twgl.drawBufferInfo(gl, buffer);
+        });
 
         // /*----------------- click objects ---------------- */
-        // if(clicked === true) {
-        //   const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
-        //   const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
-        //   const data = new Uint8Array(4);
-        //   gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-        //   const index = data[0];
-        //   let target = {name: null};
-        //   if(index > -1) {
-        //     target = mutipleThings[index];
-        //   }
-        //   console.log(target.name, 'was clicked');
-        //   clicked = false;
-        // }
-        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        if(clicked === true) {
+          const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
+          const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
+          const data = new Uint8Array(4);
+          gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+          const index = data[0];
+          let target = {name: null};
+          if(index > -1) {
+            target = mutipleThings[index];
+          }
+          if( target.name !== "floor") {
+            settings.currentObject = target.name;
+          }
+          
+          clicked = false;
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         // U.u_lightOrigin = [Math.cos(time * .0005) * 20, 10, Math.sin(time * .0005) * 20];
-        U.u_lightOrigin = [settings.posX, settings.posY, settings.posZ];
+        U.u_lightOrigin = LIGHTORIGIN;
         /*----------------- draw shadows ---------------- */
         gl.useProgram(programShadow.program);
         gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
@@ -218,14 +227,29 @@ function main() {
         const shadowMatrix_view = m4.lookAt(U.u_lightOrigin, [settings.targetX, settings.targetY, settings.targetZ], [0, 1, 0]);
         const shadowMatrix = m4.multiply(shadowMatrix_projection, m4.inverse(shadowMatrix_view));
         U.u_shadowMatrix = shadowMatrix;
+        
         mutipleThings.forEach(element => {
           // const u = element.uniforms.u_world;
-          // if( element.name === "cresent") {
-          //   const m = m4.translate(m4.identity(), 0, 2, 8);
-          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], Math.sin(angle(time * 0.01)) * 3.141592);
-          // } else {
+          const m = element.world;
+          // if( element.name === "cube") {
+          //   const m = m4.translate(m4.identity(), 0, 3, -8);
+          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], angle(time * 0.05));
+          // } else if(element.name === "torus") {
+          //   const m = m4.translate(m4.identity(), 0, 4, 0);
+          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], angle(time * 0.05) * 1.5);
+          // }else if(element.name === "sphere"){
+          //   // const m = m4.translate(m4.identity(), 0, 2, 0);
+          //   element.uniforms.u_world = m4.translate(m4.identity(), 8, Math.sin(time * 0.005) + 2, 0);
+          // }else{
           //   element.uniforms.u_world = u;
           // }
+
+          if( element.name === settings.currentObject) {
+             element.uniforms.u_world = m4.translate(m, 0, Math.sin(time * 0.005) + 2, 0);
+          } else {
+             element.uniforms.u_world = m;
+          }
+          element.uniforms.u_normalMatrix = m4.inverse(element.uniforms.u_world);
           twgl.setUniforms(programShadow, element.uniforms);
           // console.log('uniforms in shadows:', element.uniforms.u_world)
           gl.bindVertexArray(element.vao);
@@ -247,8 +271,8 @@ function main() {
         // newMatrix = m4.multiply(shadowMatrix, newMatrix);
         // U.u_samplerShadow = depthTexture;
         U.u_shadowMatrix1 = shadowMatrix;
-        // const la = m4.lookAt([Math.cos(time * .0001) * Math.PI * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * Math.PI * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
-        const la = m4.lookAt([settings.cameraX, settings.cameraY, 10], [0, 0, 0], [0, 1, 0]);
+        const la = m4.lookAt([Math.cos(time * .0001) * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
+        // const la = m4.lookAt([settings.cameraX, settings.cameraY, 10], [0, 0, 0], [0, 1, 0]);
         U.u_view = m4.inverse(la);
        
        
@@ -261,10 +285,10 @@ function main() {
         });
         
 
-        // window.requestAnimationFrame(tick);
+        window.requestAnimationFrame(tick);
     }
 
-    UI(tick);
+    // UI(tick);
 
     window.requestAnimationFrame(tick);
 }

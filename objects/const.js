@@ -9,7 +9,7 @@ const CAMERAPOSITION = {
     X: 18, Y: 25, Z: 18
 };
 
-const LIGHTORIGIN = [10, 16, -20];
+const LIGHTORIGIN = [10, 10, 10];
 
 const AMBIENTCOLOR = [0.0, 0.0, 0.0, 1.0];
 const AMBIENTCOLORFACTOR = 1;
