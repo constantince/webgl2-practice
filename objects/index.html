@@ -41,7 +41,7 @@
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
-    precision mediump float;
+    precision highp float;
     uniform vec2 u_resolution;
     uniform float u_time;
     uniform vec2 u_mouse;
@@ -57,6 +57,9 @@
     uniform vec3 u_lightOrigin;
     uniform mat4 u_normalMatrix;
     uniform float u_shiness;
+    uniform float u_innerLimit;
+    uniform float u_outerLimit;
+    uniform vec3 u_SpotDirection;
 
     in vec4 v_color;
     in vec2 v_texcoord;
@@ -66,14 +69,34 @@
     out vec4 FragColor;
 
     float unpackDepth(vec4 rgbaDepth) {
-        vec4 bitShift = vec4(1.0, 1.0 / 256.0, 1.0 / (256.0 * 256.0), 1.0 / (256.0 * 256.0 * 256.0));
-        float depth = dot(rgbaDepth, bitShift);
-        return depth;
+        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+        return dot(rgbaDepth, bitShift);
     }
+
+    float pcf(float cosTheta,vec4 position)
+    { 
+        float shadows = 0.0;
+        float opacity = 0.4; 
+        float texelSize = 1.0/2048.0; 
+        vec4 rgbaDepth;
+        vec3 shadowCoord = (position.xyz/position.w) /2.0 + 0.5; 
+        float bias = 0.005 * tan(acos(cosTheta));
+        bias = clamp(bias, 0.0015, 0.01);
+        for(float y=-1.5; y <= 1.5; y += 1.0){ 
+            for(float x=-1.5; x <=1.5; x += 1.0){ 
+                rgbaDepth = texture(u_samplerShadow, shadowCoord.xy + vec2(x,y) * texelSize);
+                shadows += step(shadowCoord.r - bias, unpackDepth(rgbaDepth));
+            } 
+        }
+        shadows /= 16.0; 
+        return min(opacity + shadows, 1.0); 
+    } 
+
+    float bias = 0.005;
 
     void main() {
         
-        vec3 depth = (v_shadowPosition.xyz / v_shadowPosition.w) / 2.0 + 0.5;
+        vec3 depth = (v_shadowPosition.xyz / v_shadowPosition.w);
         vec4 ambient = u_ambient * u_ambientFactor * u_color;
         
         vec3 normal = mat3(u_normalMatrix) * v_normal;
@@ -81,26 +104,65 @@
         vec3 lightDirection = normalize(u_lightOrigin - worldPosition);
         float fDot = max(dot(lightDirection, normal), 0.0);
         vec4 diffuse = fDot * u_color;
-
+        
+       // float limitRange = u_innerLimit - u_outerLimit;
+        float dotFromDirection = dot(normalize(u_SpotDirection), -lightDirection);
+        //  float limitRange = u_innerLimit - u_outerLimit;
+       // float inLight = clamp((dotFromDirection - u_outerLimit) / limitRange, 0.0, 1.0);
+        float inLight = smoothstep( u_outerLimit, u_innerLimit, dotFromDirection);
 
         vec3 reflectionDirection= normalize(reflect(normal, -lightDirection));
         float sDot = max(dot(reflectionDirection, -normalize(worldPosition)), 0.0);
         float ssDot = pow(sDot, u_shiness);
         vec4 specular = ssDot * u_color;
 
-        vec4 col = diffuse + ambient + specular;
+       
 
-        vec4 shadowsDepth_x = texture(u_samplerShadow, depth.xy);
-        float shadowsDepth = unpackDepth(shadowsDepth_x);
-        float colorDepth = depth.z - 0.005;
+
+       
+       //  vec4 shadowsDepth_x = texture(u_samplerShadow, depth.xy);
+       // float shadowsDepth = unpackDepth(shadowsDepth_x);
+       // float colorDepth = depth.z - 0.005;
 
         //float inShadow = shadowsDepth >= colorDepth ? 1.0 : 0.6;
 
-        col = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * vec4(vec3(0.5, 0.5, 1.0), 1.0);
+        //bias = max(0.05 * (1.0 - dot(v_normal, lightDirection)), 0.005);
+       // bias = 0.00000001 * tan(acos(dot(v_normal, lightDirection))); // cosTheta is dot( n,l ), clamped between 0 and 1
+       // bias = 0.0;
 
+       
+        // 阴影抗锯齿
+        float shadows = 0.0;
+        float opacity= .1;// 阴影alpha值, 值越小暗度越深
+        float texelSize= 1.0 / 2020.0;// 阴影像素尺寸,值越小阴影越逼真
+        vec4 rgbaDepth;
+        //  消除阴影边缘的锯齿 去平局差值四周围的
+        for(float y=-1.0; y <= 1.0; y++){
+            for(float x=-1.0; x <=1.0; x++){
+                rgbaDepth = texture(u_samplerShadow, depth.xy + vec2(x, y) * texelSize);
+                shadows += depth.z - bias > rgbaDepth.r ? 1.0 : 0.0;
+            }
+        }
+        shadows /= 9.0;// 4*4的样本
+        float visibility = min(opacity + (1.0 - shadows), 1.0); // 抗锯齿阴影
+        specular = visibility < 1.0 ? vec4(0.0): specular;// 阴影处没有高光
+
+        //float cosTheta = max(dot(lightDirection, normal), 0.0); 
+
+        //float visibility = pcf(cosTheta, v_shadowPosition);
+
+
+
+
+        vec4 col =  (diffuse + ambient + specular) * visibility;
+        col = u_ambientFactor <= 1.0 ? col : texture(u_sampler, v_texcoord) * col;
+        // 光照范围
         bool iRange = depth.x >=0.0 && depth.x <=1.0 && depth.y >= 0.0 && depth.y <= 1.0;
-        float m = (shadowsDepth > colorDepth) && iRange ? 1.0 : 0.3;
-        FragColor = vec4(col.rgb * m, 1.0);
+        //粗阴影
+        // float visibility = (shadowsDepth > colorDepth) ? 1.0 : 0.0;
+
+
+        FragColor = vec4(col.rgb , 1.0);
 
 
 
@@ -138,8 +200,18 @@
     precision mediump float;
     out vec4 FragColor;
 
+    vec4 pack (float depth) {
+        // 使用rgba 4字节共32位来存储z值,1个字节精度为1/256
+        const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+        const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
+        // gl_FragCoord:片元的坐标,fract():返回数值的小数部分
+        vec4 rgbaDepth = fract(depth * bitShift); //计算每个点的z值 
+        rgbaDepth -= rgbaDepth.gbaa * bitMask; // Cut off the value which do not fit in 8 bits
+        return rgbaDepth;
+    }
+
     void main() {
-        FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+        FragColor = vec4(gl_FragCoord.z);
     }
 
 </script>

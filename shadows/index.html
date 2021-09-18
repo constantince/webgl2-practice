@@ -69,6 +69,30 @@
     out vec4 FragColor;
 
     const float shinnes = 140.0;
+    float unpackDepth(vec4 rgbaDepth) {
+        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+        return dot(rgbaDepth, bitShift);
+    }
+
+    float pcf(float cosTheta,vec4 position)
+    { 
+        float shadows = 0.0;
+        float opacity = 0.4; 
+        float texelSize = 1.0/2048.0; 
+        vec4 rgbaDepth;
+        vec3 shadowCoord = (position.xyz/position.w)/2.0 + 0.5; 
+        float bias = 0.005;
+        bias = clamp(bias, 0.0015, 0.01);
+        for(float y=-1.5; y <= 1.5; y += 1.0){ 
+            for(float x=-1.5; x <=1.5; x += 1.0){ 
+                rgbaDepth = texture(u_texture, shadowCoord.xy + vec2(x,y) * texelSize);
+                shadows += step(shadowCoord.z - bias, unpackDepth(rgbaDepth));
+            } 
+        }
+        shadows /= 16.0; 
+        return min(opacity + shadows, 1.0); 
+    } 
+    
     void main() {
         vec3 f = v_texturePosition.xyz / v_texturePosition.w;
         vec3 normal = normalize(v_normal);
@@ -83,8 +107,10 @@
         float currentDepth = f.z + u_bias;
         float projectedDepth = texture(u_texture, f.xy).r;
         bool iRange = f.x >=0.0 && f.x <=1.0 && f.y >= 0.0 && f.y <= 1.0;
-        float m = iRange && currentDepth <= projectedDepth ? 1.0 : 0.0;
+        //loat m = iRange && currentDepth <= projectedDepth ? 1.0 : 0.0;
         
+        float cosTheta = max(dot(surfaceToView, normal), 0.0); 
+        float m = pcf(cosTheta, v_texturePosition); 
 
         vec4 mcolor = texture(u_sampler, v_coord) * u_mulColor;
         FragColor = vec4(mcolor.rgb * sdot * m, mcolor.a);
