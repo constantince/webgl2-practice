@@ -20,41 +20,7 @@ function createShaderFromScript(gl, scriptIds) {
 function angle(a) {
   return a * Math.PI / 180;
 }
-const settings = {
-  cameraX: 6,
-  cameraY: 5,
-  posX: 2.5,
-  posY: 4.8,
-  posZ: 4.3,
-  targetX: 2.5,
-  targetY: 1.0,
-  targetZ: 3.5,
-  projWidth: 1,
-  projHeight: 1,
-  perspective: true,
-  fieldOfView: 120,
-  currentObject: null
-};
 
-function UI(render) {
-
-  webglLessonsUI.setupUI(document.querySelector('#ui'), settings, [
-    { type: 'slider',   key: 'cameraX',    min: -40, max: 40, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'cameraY',    min:   1, max: 20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'posX',       min: -10, max: 10, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'posY',       min:   1, max: 20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'posZ',       min:   1, max: 20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'targetX',    min: -10, max: 10, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'targetY',    min:   0, max: 20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'targetZ',    min: -10, max: 20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'projWidth',  min:   0, max:  2, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'projHeight', min:   0, max:  2, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'spotX', min:   0, max:  20, change: render, precision: 2, step: 0.001, },
-    { type: 'slider',   key: 'spotY', min:   0, max:  20, change: render, precision: 2, step: 0.001, },
-    { type: 'checkbox', key: 'perspective', change: render, },
-    { type: 'slider',   key: 'fieldOfView', min:  1, max: 179, change: render, },
-  ]);
-}
 
 function main() {
     const canvas = document.getElementById("happy-life-happy-code");
@@ -93,27 +59,12 @@ function main() {
 
     const discBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 4, 100);
     const discVao = twgl.createVAOFromBufferInfo(gl, program, discBufferInfo);
-    // depth buffer
-    // const fb = makeBuffer(gl);
-
-    // shadow buffer
-        
-  // Initialize framebuffer object (FBO)  
-    // var {
-    //   depthTexture, depthFramebuffer
-    // } = makeShadowBuffer(gl);
 
     var fbo = initFramebufferObject(gl);
+    // var { depthTexture, depthFramebuffer } = makeShadowBuffer(gl);
     if (!fbo) {
       console.log('Failed to initialize frame buffer object');
       return;
-    }
-
-
-    let U = {
-      ...getUniforms(gl),
-      u_ambientFactor: 2.0,
-      u_color: [.85, .85, .85, 1.0]
     }
 
     let mutipleThings = [
@@ -129,17 +80,7 @@ function main() {
       //     u_ambientFactor: 1.0
       //   }
       // },
-      // {
-      //   name: "floor",
-      //   buffer: planeBufferInfo,
-      //   vao: planeVAO,
-      //   world: m4.translate(m4.identity(), 0, 0, 0),
-      //   u_nochessboard: 2.0,
-      //   u_ambientFactor: 1.0,
-      //   uniforms: {
-      //     ...U
-      //   }
-      // },
+      
       // {
       //   name: "torus",
       //   buffer: torusBufferInfo,
@@ -178,12 +119,20 @@ function main() {
         name: 'cube',
         buffer: cubeBufferInfo,
         vao: cubeVao,
-        world: m4.translate(m4.identity(), 0, 2, -8),
         uniforms: {
-          ...U,
-          u_color: CUBECOLOR,
-          u_world: m4.identity(),
-          u_ambientFactor: 1.0
+          u_color: [1.0, 0.0, 0.0, 1.0],
+          u_world: m4.identity()
+         
+        }
+      },
+      {
+        name: "floor",
+        buffer: planeBufferInfo,
+        vao: planeVAO,
+        uniforms: {
+          u_color: [1.0, 1.0, 1.0, 1.0],
+          u_world: m4.translate(m4.identity(), 0, -2, 0)
+          
         }
       },
       // {
@@ -252,52 +201,49 @@ function main() {
         // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         // U.u_lightOrigin = [Math.cos(time * .0005) * 20, 10, Math.sin(time * .0005) * 20];
         // U.u_lightOrigin = [settings.posX, settings.posY, settings.posZ];
-        U.u_lightOrigin = LIGHTORIGIN;
+        // U.u_lightOrigin = LIGHTORIGIN;
         /*----------------- draw shadows ---------------- */
         // gl.cullFace(gl.FRONT);
         gl.useProgram(programShadow.program);
        
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+       
         
         gl.viewport(0, 0, canvas_w, canvas_h);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         
-        const shadowMatrix_projection = m4.perspective(angle(settings.fieldOfView), settings.projWidth / settings.projHeight, .5, 1000);
-        // const shadowMatrix_projection = m4.orthographic(512, 512, 512, 512, 1, 1000);
-        const shadowMatrix_view = m4.lookAt(U.u_lightOrigin, [settings.targetX, settings.targetY, settings.targetZ], [0, 1, 0]);
-        const shadowMatrix = m4.multiply(shadowMatrix_projection, m4.inverse(shadowMatrix_view));
-       
+
         
-        mutipleThings.forEach(element => {
-          // const u = element.uniforms.u_world;
-          const m = element.world;
-          // if( element.name === "cube") {
-          //   const m = m4.translate(m4.identity(), 0, 3, -8);
-          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], angle(time * 0.05));
-          // } else if(element.name === "torus") {
-          //   const m = m4.translate(m4.identity(), 0, 4, 0);
-          //   element.uniforms.u_world = m4.axisRotate(m, [0, 0, 1], angle(time * 0.05) * 1.5);
-          // }else if(element.name === "sphere"){
-          //   // const m = m4.translate(m4.identity(), 0, 2, 0);
-          //   element.uniforms.u_world = m4.translate(m4.identity(), 8, Math.sin(time * 0.005) + 2, 0);
-          // }else{
-          //   element.uniforms.u_world = u;
-          // }
-          element.uniforms.u_shadowMatrix = shadowMatrix;
-          if( element.name === settings.currentObject) {
-             element.uniforms.u_world = m4.translate(m, 0, Math.sin(time * 0.005) + 2, 0);
-          } else {
-             element.uniforms.u_world = m;
-          }
-          // element.uniforms.u_samplerShadow = fbo.texture;
-          element.uniforms.u_normalMatrix = m4.inverse(element.uniforms.u_world);
-          twgl.setUniforms(programShadow, element.uniforms);
-          // console.log('uniforms in shadows:', element.uniforms.u_world)
-          gl.bindVertexArray(element.vao);
-         twgl.drawBufferInfo(gl, element.buffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        const u_projection = m4.perspective(fieldView, 1, 1, 1000);
+        // // const shadowMatrix_projection = m4.orthographic(512, 512, 512, 512, 1, 1000);
+        const u_view = m4.lookAt([10, 10, 10], [0, 0, 0], [0, 1, 0]);
+        // const shadowMatrix = m4.multiply(shadowMatrix_projection, m4.inverse(shadowMatrix_view));
+        // U.u_shadowMatrix = shadowMatrix;
+        
+        twgl.setUniforms(programShadow, {
+          u_projection,
+          u_view: m4.inverse(u_view),
+          u_world: m4.identity()
         });
 
-        // gl.cullFace(gl.BACK);
+        mutipleThings.forEach(element => {
+          // const u = element.uniforms.u_world;
+          // const m = element.world;
+
+        //   if( element.name === settings.currentObject) {
+        //      element.uniforms.u_world = m4.translate(m, 0, Math.sin(time * 0.005) + 2, 0);
+        //   } else {
+        //      element.uniforms.u_world = m;
+        //   }
+        //   // element.uniforms.u_samplerShadow = fbo.texture;
+        //   element.uniforms.u_normalMatrix = m4.inverse(element.uniforms.u_world);
+          twgl.setUniforms(programShadow, element.uniforms);
+        //   // console.log('uniforms in shadows:', element.uniforms.u_world)
+           gl.bindVertexArray(element.vao);
+           twgl.drawBufferInfo(gl, element.buffer);
+        });
+
+        // // gl.cullFace(gl.BACK);
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -308,34 +254,35 @@ function main() {
         gl.useProgram(program.program);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.viewport(0, 0, canvas_w, canvas_h);
-        
-       
-        let textureMatrix = m4.identity();
+        const la = m4.lookAt([Math.cos(time * .0001) * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
         gl.activeTexture(gl.TEXTURE0); // Set a texture object to the texture unit
         gl.bindTexture(gl.TEXTURE_2D, fbo.texture);
-        // console.log(fbo.texture);
-        U.u_samplerShadow = 0;
-        const offset = .5;
-        textureMatrix = m4.translate(textureMatrix, offset, offset, offset);
-        textureMatrix = m4.scale(textureMatrix, offset, offset, offset);
-        textureMatrix = m4.multiply(textureMatrix, shadowMatrix_projection);
-        textureMatrix = m4.multiply(textureMatrix, m4.inverse(shadowMatrix_view));
+        twgl.setUniforms(program, {
+          u_perspective : m4.perspective(fieldView, 1, ratio, 1000),
+          u_view: m4.inverse(la),
+          u_world: m4.identity(),
+          u_samplerShadow: 0
+        });
+        
+        // let textureMatrix = m4.identity();
+       
+        // // console.log(fbo.texture);
+        // U.u_samplerShadow = 0;
+        // const offset = .5;
+        // textureMatrix = m4.translate(textureMatrix, offset, offset, offset);
+        // textureMatrix = m4.scale(textureMatrix, offset, offset, offset);
+        // textureMatrix = m4.multiply(textureMatrix, shadowMatrix_projection);
+        // textureMatrix = m4.multiply(textureMatrix, m4.inverse(shadowMatrix_view));
 
         
-        U.u_shadowMatrix1 = textureMatrix;
+        // U.u_shadowMatrix1 = textureMatrix;
         
-       
-       
-        U.u_SpotDirection = [settings.spotX, settings.spotX, 100];
 
         mutipleThings.forEach(element => {
-          element.uniforms.u_perspective = m4.perspective(fieldView, 1, ratio, 1000);
-          const la = m4.lookAt([Math.cos(time * .0001) * CAMERAPOSITION.X, CAMERAPOSITION.Y, Math.sin(time * .0001) * CAMERAPOSITION.Z], [0, 0, 0], [0, 1, 0]);
-        // const la = m4.lookAt([settings.cameraX, settings.cameraY, 10], [0, 0, 0], [0, 1, 0]);
-          element.uniforms.u_view = m4.inverse(la);
+          gl.bindVertexArray(element.vao);
           // console.log('uniforms in color buffer:', element.uniforms.u_world)
           twgl.setUniforms(program, element.uniforms);
-          gl.bindVertexArray(element.vao);
+         
           twgl.drawBufferInfo(gl, element.buffer);
         });
         

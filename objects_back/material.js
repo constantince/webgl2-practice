@@ -1,4 +1,4 @@
-var OFFSCREEN_WIDTH = 500, OFFSCREEN_HEIGHT = 500;
+var OFFSCREEN_WIDTH = 2048, OFFSCREEN_HEIGHT = 2048;
 
 function generateTiles() {
     let tils = [];
