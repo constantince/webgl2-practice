@@ -154,6 +154,11 @@ function main() {
     // gl.useProgram(program.program);
     const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
     const cubeVao = twgl.createVAOFromBufferInfo(gl, program, cubeBufferInfo);
+
+    const discBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 1, 3);
+    const discVao = twgl.createVAOFromBufferInfo(gl, program, discBufferInfo);
+
+
     const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 10, 10);
     const planeVao = twgl.createVAOFromBufferInfo(gl, program, planeBufferInfo);
     
@@ -161,16 +166,23 @@ function main() {
     gl.enable(gl.CULL_FACE);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     var tick = function(time) {
+
+        // gl.cullFace(gl.FRONT);
+        // gl.enable(gl.POLYGON_OFFSET_FILL);
+        // gl.polygonOffset(1.0, 1.0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
         gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        // gl.cullFace(gl.FRONT);
+       
+       
+       
         // frame buffer
         
         const frame_projection = m4.perspective(fileView, 1, 1, 1000);
-        const frame_camera = m4.lookAt([10, 5, 2], [0, 0, 0], [0, 1, 0]);
+        const frame_camera = m4.lookAt([5, 10, 5], [0, 0, 0], [0, 1, 0]);
         const frame_world = m4.identity();
-        const frame_cube_world = m4.translate(m4.identity(), 0, Math.abs(Math.sin(time * 0.001)) + .3, 0);
+        const frame_cube_world = m4.translate(m4.identity(), 0, .5, 0);
+        const frame_disc_world = m4.translate(m4.identity(), 2.5, Math.sin(time * 0.001) + 2.5, 0);
         gl.useProgram(fprogram.program);
         twgl.setUniforms(fprogram, {
           u_projection: frame_projection,
@@ -186,13 +198,21 @@ function main() {
         gl.bindVertexArray(cubeVao);
         twgl.drawBufferInfo(gl, cubeBufferInfo);
         twgl.setUniforms(fprogram, {
+          u_world: frame_disc_world
+        });
+        gl.bindVertexArray(discVao);
+        twgl.drawBufferInfo(gl, discBufferInfo);
+
+
+        twgl.setUniforms(fprogram, {
           u_world: frame_world
         });
         gl.bindVertexArray(planeVao);
         twgl.drawBufferInfo(gl, planeBufferInfo);
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        // gl.cullFace(gl.BACK);
+        gl.cullFace(gl.BACK);
+        // gl.disable(gl.POLYGON_OFFSET_FILL);
 
 
         // render buffer
@@ -216,6 +236,17 @@ function main() {
 
         gl.bindVertexArray(cubeVao);
         twgl.drawBufferInfo(gl, cubeBufferInfo);
+
+
+        twgl.setUniforms(program, {
+          u_color: [0.0, 1.0, 1.0],
+          u_world: frame_disc_world,
+          u_frame_world: frame_disc_world
+        });
+
+
+        gl.bindVertexArray(discVao);
+        twgl.drawBufferInfo(gl, discBufferInfo);
 
         twgl.setUniforms(program, {
           u_color: [1.0, 1.0, 1.0],

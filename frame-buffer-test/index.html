@@ -44,26 +44,34 @@
     uniform vec3 u_color;
     uniform sampler2D u_texture;
     out vec4 FragColor;
-    
-    float bias = 0.005;
+
+    float unpackDepth(vec4 rgbaDepth) {
+        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+        return dot(rgbaDepth, bitShift);
+    }
+
+    //float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    float bias =0.005; 
     void main() {
         vec3 depth = (v_framePostion.xyz / v_framePostion.w) / 2.0 + 0.5;
-
+        
         // 阴影抗锯齿
+        
         float shadows = 0.0;
-        float opacity= .5;// 阴影alpha值, 值越小暗度越深
+        float opacity= .4;// 阴影alpha值, 值越小暗度越深
         float texelSize= 1.0 / 2020.0;// 阴影像素尺寸,值越小阴影越逼真
         vec4 rgbaDepth;
         //  消除阴影边缘的锯齿 去平局差值四周围的
         for(float y=-1.0; y <= 1.0; y++){
             for(float x=-1.0; x <=1.0; x++){
                 rgbaDepth = texture(u_texture, depth.xy + vec2(x, y) * texelSize);
-                shadows += depth.z - bias > rgbaDepth.r ? 1.0 : 0.0;
+                shadows += depth.z - bias > unpackDepth(rgbaDepth) ? 1.0 : 0.0;
             }
         }
         shadows /= 9.0;// 4*4的样本
         float visibility = min(opacity + (1.0 - shadows), 1.0); // 抗锯齿阴影
         //specular = visibility < 1.0 ? vec4(0.0): specular;// 阴影处没有高光
+        
         //vec4 shadow = texture(u_texture, depth.xy);
         //float visibility = depth.z > shadow.r + 0.005 ? 0.0 : 1.0;
 
@@ -91,11 +99,20 @@
     uniform float u_time;
     uniform vec2 u_mouse;
    
+    vec4 pack (float depth) {
+        // 使用rgba 4字节共32位来存储z值,1个字节精度为1/256
+        const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+        const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
+        // gl_FragCoord:片元的坐标,fract():返回数值的小数部分
+        vec4 rgbaDepth = fract(depth * bitShift); //计算每个点的z值 
+        rgbaDepth -= rgbaDepth.gbaa * bitMask; // Cut off the value which do not fit in 8 bits
+        return rgbaDepth;
+    }
 
     in vec4 v_color;
     out vec4 FragColor;
     void main() {
-        FragColor = vec4(gl_FragCoord.z);
+        FragColor = vec4(pack(gl_FragCoord.z));
     }
 </script>
 
