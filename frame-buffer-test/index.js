@@ -155,12 +155,68 @@ function main() {
     const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
     const cubeVao = twgl.createVAOFromBufferInfo(gl, program, cubeBufferInfo);
 
-    const discBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 1, 3);
+    const discBufferInfo = twgl.primitives.createDiscBufferInfo(gl, .5, 3);
     const discVao = twgl.createVAOFromBufferInfo(gl, program, discBufferInfo);
 
+    const cylindarBufferInfo = twgl.primitives.createCylinderBufferInfo(gl, 1, 2, 255, 10);
+    const cylindarVao = twgl.createVAOFromBufferInfo(gl, program, cylindarBufferInfo);
 
     const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 10, 10);
     const planeVao = twgl.createVAOFromBufferInfo(gl, program, planeBufferInfo);
+
+    const sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 255, 255);
+    const sphereVao = twgl.createVAOFromBufferInfo(gl, program, sphereBufferInfo);
+
+    const objects = [
+      {
+        name: 'sphere',
+        vao: sphereVao,
+        buffer: sphereBufferInfo,
+        u_world: m4.translate(m4.identity(), -1, 1, -1.5),
+        u_color: [1.0, 1.0, 0.0],
+        uniforms: {
+        }
+
+      },
+      {
+        name: 'cylindar',
+        vao: cylindarVao,
+        buffer: cylindarBufferInfo,
+        u_world: m4.translate(m4.identity(), 1, 1, 2),
+        u_color: [1.0, 0.0, 0.0],
+        uniforms: {
+        }
+
+      },
+      {
+        name: 'cube',
+        vao: cubeVao,
+        buffer: cubeBufferInfo,
+        u_world: m4.translate(m4.identity(), 0, .5, 0),
+        u_color: [1.0, 0.0, 1.0],
+        uniforms: {
+        }
+
+      },
+      {
+        name: 'plane',
+        vao: planeVao,
+        buffer: planeBufferInfo,
+        u_world: m4.identity(),
+        u_color: [1.0, 1.0, 1.0],
+        uniforms: { 
+        }
+      },
+      {
+        name: 'disc',
+        vao: discVao,
+        buffer: discBufferInfo,
+        u_world: m4.translate(m4.identity(), 2.5, 4, 3.5),
+        u_color: [0.0, 1.0, 1.0],
+        uniforms: { 
+        }
+      }
+    ]
     
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
@@ -181,37 +237,44 @@ function main() {
         const frame_projection = m4.perspective(fileView, 1, 1, 1000);
         const frame_camera = m4.lookAt([5, 10, 5], [0, 0, 0], [0, 1, 0]);
         const frame_world = m4.identity();
-        const frame_cube_world = m4.translate(m4.identity(), 0, .5, 0);
-        const frame_disc_world = m4.translate(m4.identity(), 2.5, Math.sin(time * 0.001) + 2.5, 0);
+        // const object = m4.translate(m4.identity(), 0, .5, 0);
+        const frame_disc_world = m4.translate(m4.identity(), Math.cos(time * 0.001) + 2.5, 3.5, Math.sin(time * 0.001) + 2.5);
         gl.useProgram(fprogram.program);
         twgl.setUniforms(fprogram, {
           u_projection: frame_projection,
-          u_view: m4.inverse(frame_camera),
-          u_world: frame_cube_world
+          u_view: m4.inverse(frame_camera)
         });
        
         // initAttributeVariable(gl, aPosition, triangle.vertexBuffer);
         // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangle.indexBuffer);
         
         // gl.drawElements(gl.TRIANGLES, triangle.numIndices, gl.UNSIGNED_BYTE, 0);
-
-        gl.bindVertexArray(cubeVao);
-        twgl.drawBufferInfo(gl, cubeBufferInfo);
-        twgl.setUniforms(fprogram, {
-          u_world: frame_disc_world
+        objects.forEach(item => {
+          twgl.setUniforms(fprogram, {
+            u_world: item.u_world,
+            u_color: item.u_color
+          });
+          gl.bindVertexArray(item.vao);
+          twgl.drawBufferInfo(gl, item.buffer);
         });
-        gl.bindVertexArray(discVao);
-        twgl.drawBufferInfo(gl, discBufferInfo);
+        // gl.bindVertexArray(cubeVao);
+        // twgl.drawBufferInfo(gl, cubeBufferInfo);
+        // twgl.setUniforms(fprogram, {
+        //   u_world: frame_disc_world
+        // });
+
+        // gl.bindVertexArray(discVao);
+        // twgl.drawBufferInfo(gl, discBufferInfo);
 
 
-        twgl.setUniforms(fprogram, {
-          u_world: frame_world
-        });
-        gl.bindVertexArray(planeVao);
-        twgl.drawBufferInfo(gl, planeBufferInfo);
+        // twgl.setUniforms(fprogram, {
+        //   u_world: frame_world
+        // });
+        // gl.bindVertexArray(planeVao);
+        // twgl.drawBufferInfo(gl, planeBufferInfo);
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.cullFace(gl.BACK);
+        // gl.cullFace(gl.BACK);
         // gl.disable(gl.POLYGON_OFFSET_FILL);
 
 
@@ -226,35 +289,42 @@ function main() {
         twgl.setUniforms(program, {
           u_projection: render_projection,
           u_view: m4.inverse(render_camera),
-          u_world: frame_cube_world,
           u_frame_projection: frame_projection,
           u_frame_view: m4.inverse(frame_camera),
-          u_frame_world: frame_cube_world,
           u_texture: texture,
           u_color: [1.0, 0.0, 0.0]
         });
 
-        gl.bindVertexArray(cubeVao);
-        twgl.drawBufferInfo(gl, cubeBufferInfo);
-
-
-        twgl.setUniforms(program, {
-          u_color: [0.0, 1.0, 1.0],
-          u_world: frame_disc_world,
-          u_frame_world: frame_disc_world
+        objects.forEach(item => {
+          twgl.setUniforms(program, {
+            u_world: item.u_world,
+            u_color: item.u_color
+          });
+          gl.bindVertexArray(item.vao);
+          twgl.drawBufferInfo(gl, item.buffer);
         });
 
+        // gl.bindVertexArray(cubeVao);
+        // twgl.drawBufferInfo(gl, cubeBufferInfo);
 
-        gl.bindVertexArray(discVao);
-        twgl.drawBufferInfo(gl, discBufferInfo);
 
-        twgl.setUniforms(program, {
-          u_color: [1.0, 1.0, 1.0],
-          u_world: m4.identity(),
-          u_frame_world: m4.identity()
-        });
-        gl.bindVertexArray(planeVao);
-        twgl.drawBufferInfo(gl, planeBufferInfo);
+        // twgl.setUniforms(program, {
+        //   u_color: [0.0, 1.0, 1.0],
+        //   u_world: frame_disc_world,
+        //   u_frame_world: frame_disc_world
+        // });
+
+
+        // gl.bindVertexArray(discVao);
+        // twgl.drawBufferInfo(gl, discBufferInfo);
+
+        // twgl.setUniforms(program, {
+        //   u_color: [0.75, 0.75, 0.75],
+        //   u_world: m4.identity(),
+        //   u_frame_world: m4.identity()
+        // });
+        // gl.bindVertexArray(planeVao);
+        // twgl.drawBufferInfo(gl, planeBufferInfo);
 
         window.requestAnimationFrame(tick);
 

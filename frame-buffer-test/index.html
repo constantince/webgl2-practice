@@ -32,7 +32,7 @@
     void main() {
         gl_Position = u_projection * u_view * u_world * a_position;
 
-        v_framePostion = u_frame_projection * u_frame_view * u_frame_world * a_position;
+        v_framePostion = u_frame_projection * u_frame_view * u_world * a_position;
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
