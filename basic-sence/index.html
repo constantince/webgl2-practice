@@ -19,7 +19,7 @@
 <script type="x-shader/x-vertex" id="vertex">#version 300 es
     in vec4 a_position;
     in vec4 a_color;
-    in vec3 a_normal;
+    in vec4 a_normal;
     uniform mat4 u_projection;
     uniform mat4 u_view;
     uniform mat4 u_world;
@@ -30,7 +30,7 @@
     void main() {
         gl_Position = u_projection * u_view * u_world * a_position;
         v_worldPosition = u_world * a_position;
-        v_normal = mat3(u_normalMatrix) * a_normal;
+        v_normal = vec3(u_normalMatrix * a_normal);
     }
 </script>
 <script type="x-shader/x-fragment" id="frag">#version 300 es
@@ -45,14 +45,14 @@
     uniform vec4 u_color;
 
     // light
-    uniform vec4 u_ambientColor;
+    uniform vec3 u_ambientColor;
     uniform float u_ambientM;
 
     uniform vec3 u_lightSource;
-    uniform vec4 u_diffuseColor;
+    uniform vec3 u_diffuseColor;
     uniform float u_diffuseM;
 
-    uniform vec4 u_specularColor;
+    uniform vec3 u_specularColor;
     uniform float u_specularM;
     uniform vec3 u_viewDirection;
 
@@ -60,25 +60,25 @@
 
     out vec4 FragColor;
 
-    const float shiness = 160.0;
+    const float shiness = 60.0;
     void main() {
-        vec4 col = vec4(1.0);
+        vec3 col = vec3(1.0);
 
         vec3 postion = v_worldPosition.xyz / v_worldPosition.w;
         vec3 normal = normalize(v_normal);
-        vec4 ambient = u_ambientColor * u_ambientM * u_color;
+        vec3 ambient = u_ambientColor * u_ambientM * u_color.rgb;
 
-        vec3 lightDirection = max(normalize(u_lightSource - postion), 0.0);
+        vec3 lightDirection = normalize(u_lightSource - postion);
         float fDot = max(dot(normal, lightDirection), 0.0);
-        vec4 diffuse = u_diffuseColor * u_diffuseM * fDot * u_color;
+        vec3 diffuse = u_diffuseColor * u_diffuseM * fDot * u_color.rgb;
 
         vec3 ref = normalize(reflect(normal, -lightDirection));
-        float sDot = clamp(dot(ref, -normalize(u_viewDirection)), 0.0, 1.0);
+        float sDot = max(dot(ref, -normalize(u_viewDirection)), 0.0);
         float pows = pow(sDot, shiness);
-        vec4 specular = u_specularColor * u_specularM * pows * u_color;
+        vec3 specular = u_specularColor * u_specularM * pows * u_color.rgb;
 
-        col = ambient + diffuse + specular;
-        FragColor = col;
+        col = ambient + diffuse;
+        FragColor = vec4(col, 1.0);
     }
 </script>
 

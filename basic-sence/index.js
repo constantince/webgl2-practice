@@ -21,14 +21,24 @@ function toRedius(a) {
   return a * 180 / Math.PI;
 }
 
-const AMBIENTCOLOR = [0.1, 0.1, 0.1, 1.0];
+function createEmptyMatrix() {
+    const transformMatrix = m4.identity();
+    return {
+      u_world: transformMatrix,
+      u_normalMatrix: m4.inverse(transformMatrix)
+    }
+}
+
+const AMBIENTCOLOR = [0.1, 0.1, 0.1];
 const AMBIENTMATERIAL = 0.63;
-const DIFFUSECOLOR = [1.0, 1.0, 1.0, 1.0];
+const DIFFUSECOLOR = [1.0, 1.0, 1.0];
 const DIFFUSEMATERIAL = 2.0;
-const SPECULARCOLOR = [1.0, 1.0, 1.0, 1.0];
+const SPECULARCOLOR = [1.0, 1.0, 1.0];
 const SPECULARM = 2.0;
-const LIGHTSOURCE = [5, 6, 7];
-const LOOKAT = [5, 5, 5];
+const LIGHTSOURCE = [2.3, 4.0, 3.5];
+const LOOKAT = [5, 5, 10];
+
+
 
 function main() {
     const canvas = document.getElementById("happy-life-happy-code");
@@ -42,8 +52,11 @@ function main() {
 
     twgl.setAttributePrefix("a_");
 
-    const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
+    const cubeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 2);
     const cubeVao = twgl.createVAOFromBufferInfo(gl, renderProgram, cubeBufferInfo);
+
+    const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 20, 20);
+    const planeVao = twgl.createVAOFromBufferInfo(gl, renderProgram, planeBufferInfo);
     
     // render scenc matrixs
     const render_project = m4.perspective(toRedius(60), 1, gl.canvas.width / gl.canvas.height, 1000);
@@ -57,10 +70,28 @@ function main() {
         buffer: cubeBufferInfo,
         vao: cubeVao,
         calculateTheUniforms: function(time) {
-          const rotation = m4.axisRotate(m4.identity(), [0, 1, 0], toRedius(time * 0.00001));
+          const transformMatrix = m4.axisRotate(m4.identity(), [0, 1, 0], toRedius(time * 0.00001));
           return {
-            u_world: rotation,
-            u_normalMatrix: m4.inverse(rotation)
+            u_ambientM: 0.7,
+            u_diffuseM: 0.8,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
+      {
+        name: 'plane',
+        buffer: planeBufferInfo,
+        vao: planeVao,
+        calculateTheUniforms: function(time) {
+          const transformMatrix = m4.translate(m4.identity(), 0, -2, 0);
+          return {
+            u_ambientM: 0.2,
+            u_diffuseM: 0.4,
+            u_specularM: 0.6,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.inverse(transformMatrix)
           }
         }
       }
@@ -80,11 +111,8 @@ function main() {
           //u_world: m4.axisRotate(m4.identity(), [1, 1, 1], toRedius(time * 0.00001)),
           u_lightSource: LIGHTSOURCE,
           u_ambientColor: AMBIENTCOLOR,
-          u_ambientM: AMBIENTMATERIAL,
           u_diffuseColor: DIFFUSECOLOR,
-          u_diffuseM: DIFFUSEMATERIAL,
           u_specularColor: SPECULARCOLOR,
-          u_specularM: SPECULARM,
           u_viewDirection: LOOKAT,
           u_color: [1.0, 1.0, 1.0, 1.0]
         });
