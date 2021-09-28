@@ -105,8 +105,8 @@
         float texelSize= 1.0 / 2028.0;// 阴影像素尺寸,值越小阴影越逼真
         vec4 rgbaDepth;
         //  消除阴影边缘的锯齿 去平局差值四周围的
-        for(float y=-1.0; y <= 1.0; y++){
-            for(float x=-1.0; x <=1.0; x++){
+        for(float y=-2.0; y <= 2.0; y++){
+            for(float x=-2.0; x <=2.0; x++){
                 rgbaDepth = texture(u_texture, depth.xy + vec2(x, y) * texelSize);
                 shadows += (depth.z - bias > rgbaDepth.r) ? 1.0 : 0.0;
             }
@@ -152,6 +152,30 @@
 
     void main() {
        FragColor = pack(gl_FragCoord.z);
+    }
+
+</script>
+
+
+
+<script type="x-shader/x-vertex" id="click-vertex">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+    }
+
+</script>
+
+<script type="x-shader/x-vertex" id="click-frag">#version 300 es
+    precision mediump float;
+    uniform vec4 u_id;
+    out vec4 FragColor;
+
+    void main() {
+       FragColor = u_id;
     }
 
 </script>
