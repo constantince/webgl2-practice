@@ -257,7 +257,7 @@ function main() {
     const discBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 2.0, 6);
     const discVao = twgl.createVAOFromBufferInfo(gl, renderProgram, discBufferInfo);
 
-    const sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 255, 255);
+    const sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, .7, 255, 255);
     const sphereVao = twgl.createVAOFromBufferInfo(gl, renderProgram, sphereBufferInfo);
 
     const torusBufferInfo = twgl.primitives.createTorusBufferInfo(gl, 1, .2, 255, 255);
@@ -267,6 +267,7 @@ function main() {
     const cylindarVao = twgl.createVAOFromBufferInfo(gl, renderProgram, cylindarBufferInfo);
 
     // load object from serve
+    /*
     fetch('./teamugobj.obj').then(response => response.text()
     ).then(res => {
       const obj = parseOBJ(res);
@@ -299,6 +300,7 @@ function main() {
           }
         });
       });  
+      */
     // render scenc matrixs
     // const render_project = m4.perspective(toRedius(60), 1, gl.canvas.width / gl.canvas.height, 1000);
     // const render_view = m4.lookAt(LOOKAT, [0, 0, 0], [0, 1, 0]);
@@ -313,97 +315,101 @@ function main() {
 
     //scene
     const sence = [
-      // {
-      //   name: 'cylindar',
-      //   buffer: cylindarBufferInfo,
-      //   vao: cylindarVao,
-      //   calculateTheUniforms: function(time) {
-      //     const translation = m4.translate(m4.identity(), -1.5, 1.0, 2);
-      //     const transformMatrix =m4.axisRotate(translation, [1, 1, 1], toRedius(time * 0.00001));
-      //     return {
-      //       u_use_shadow: true,
-      //       u_color: [1.0, 0.0, 0.0, 1.0],
-      //       u_ambientM: 0.1,
-      //       u_diffuseM: 0.6,
-      //       u_specularM: 0.9,
-      //       u_world: transformMatrix,
-      //       u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
-      //     }
-      //   }
-      // },
-      // {
-      //   name: 'torus',
-      //   buffer: torusBufferInfo,
-      //   vao: torusVao,
-      //   calculateTheUniforms: function(time) {
-      //     const transform = m4.translate(m4.identity(), 1, 1.0, 2.5);
-      //     const transformMatrix = m4.axisRotate(transform, [1, 1, 1], toRedius(time * 0.00001));
-      //     return {
-      //       u_use_shadow: true,
-      //       u_color: [1.0, 1.0, 0.0, 1.0],
-      //       u_ambientM: 0.1,
-      //       u_diffuseM: 0.6,
-      //       u_specularM: 0.9,
-      //       u_world: transformMatrix,
-      //       u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
-      //     }
-      //   }
-      // },
-      // {
-      //   name: 'sphere',
-      //   buffer: sphereBufferInfo,
-      //   vao: sphereVao,
-      //   calculateTheUniforms: function(time) {
-      //     const translation = m4.translate(m4.identity(), 3, 1.0, -3);
-      //     const rotation = twgl.m4.rotateY(m4.identity(), toRedius(time * 0.00001));
-      //     const transformMatrix = m4.multiply(rotation, translation);
-      //     return {
-      //       u_use_shadow: true,
-      //       u_color: [0.0, 1.0, 0.0, 1.0],
-      //       u_ambientM: 0.1,
-      //       u_diffuseM: 0.6,
-      //       u_specularM: 0.9,
-      //       u_world: transformMatrix,
-      //       u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
-      //     }
-      //   }
-      // },
-      // {
-      //   name: 'disc',
-      //   buffer: discBufferInfo,
-      //   vao: discVao,
-      //   calculateTheUniforms: function(time) {
-      //     let tanslate = m4.translate(m4.identity(), 2, 2, 1.1);
-      //     //tanslate = twgl.m4.rotateX(tanslate, toRedius(90));
-      //     const transformMatrix = m4.axisRotate(tanslate, [1, 0, 0], toRedius(time * 0.00001));
-      //     return {
-      //       u_color: [1.0, 1.0, 1.0, 1.0],
-      //       u_use_shadow: true,
-      //       u_ambientM: 0.1,
-      //       u_diffuseM: 0.6,
-      //       u_specularM: 0.9,
-      //       u_world: transformMatrix,
-      //       u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
-      //     }
-      //   }
-      // },
-      // {
-      //   name: 'cube',
-      //   buffer: cubeBufferInfo,
-      //   vao: cubeVao,
-      //   calculateTheUniforms: function(time) {
-      //     const transformMatrix = m4.translate(m4.identity(), 0, Math.sin(time * 0.001) + 2.5, 0);
-      //     return {
-      //       u_color: [.34, .78, .98, 1.0],
-      //       u_use_shadow: true,
-      //       u_ambientM: 0.1,
-      //       u_diffuseM: 0.6,
-      //       u_specularM: 0.9,
-      //       u_world: transformMatrix,
-      //       u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
-      //     }
-      //   }
-      // },
+      {
+        name: 'cylindar',
+        buffer: cylindarBufferInfo,
+        vao: cylindarVao,
+        calculateTheUniforms: function(time) {
+          let translation = m4.translate(m4.identity(), -1.5, 1.0, 2);
+          translation = twgl.m4.scale(translation, [0.5, 0.5, 0.5]);
+          const transformMatrix =m4.axisRotate(translation, [1, 1, 1], toRedius(time * 0.00001));
+          return {
+            u_use_shadow: true,
+            u_color: [1.0, 0.0, 0.0, 1.0],
+            u_ambientM: 0.1,
+            u_diffuseM: 0.6,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
+      {
+        name: 'torus',
+        buffer: torusBufferInfo,
+        vao: torusVao,
+        calculateTheUniforms: function(time) {
+          let translation = m4.translate(m4.identity(), 1, 1.0, 2.5);
+          translation = twgl.m4.scale(translation, [0.7, 0.7, 0.7]);
+          const transformMatrix = m4.axisRotate(translation, [1, 1, 1], toRedius(time * 0.00001));
+          return {
+            u_use_shadow: true,
+            u_color: [1.0, 1.0, 0.0, 1.0],
+            u_ambientM: 0.1,
+            u_diffuseM: 0.6,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
+      {
+        name: 'sphere',
+        buffer: sphereBufferInfo,
+        vao: sphereVao,
+        calculateTheUniforms: function(time) {
+          const translation = m4.translate(m4.identity(), 3.5, 2.0, -3.5);
+          const rotation = twgl.m4.rotateY(m4.identity(), toRedius(time * 0.00001));
+          const transformMatrix = m4.multiply(rotation, translation);
+          return {
+            u_use_shadow: true,
+            u_color: [0.0, 1.0, 0.0, 1.0],
+            u_ambientM: 0.1,
+            u_diffuseM: 0.6,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
+      {
+        name: 'disc',
+        buffer: discBufferInfo,
+        vao: discVao,
+        calculateTheUniforms: function(time) {
+          let translation = m4.translate(m4.identity(), 3, 2, 2.1);
+          translation = twgl.m4.scale(translation, [0.5, 0.5, 0.5]);
+         translation = m4.axisRotate(translation, [0, 1, 1], toRedius(90));
+          const transformMatrix = m4.axisRotate(translation, [0, 1, 0], toRedius(time * 0.00001));
+          return {
+            u_color: [1.0, 1.0, 1.0, 1.0],
+            u_use_shadow: true,
+            u_ambientM: 0.1,
+            u_diffuseM: 0.6,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
+      {
+        name: 'cube',
+        buffer: cubeBufferInfo,
+        vao: cubeVao,
+        calculateTheUniforms: function(time) {
+          let translation = twgl.m4.scale(m4.identity(), [0.7, 0.7, 0.7]);
+          const transformMatrix = m4.translate(translation, 0, Math.sin(time * 0.001) + 2.5, 0);
+          return {
+            u_color: [.34, .78, .98, 1.0],
+            u_use_shadow: true,
+            u_ambientM: 0.1,
+            u_diffuseM: 0.6,
+            u_specularM: 0.9,
+            u_world: transformMatrix,
+            u_normalMatrix: m4.transpose(m4.inverse(transformMatrix))
+          }
+        }
+      },
       {
         name: 'plane',
         buffer: planeBufferInfo,
@@ -428,7 +434,7 @@ function main() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     var tick = function(time) {
       // render scenc matrixs
-      const VIEWORIGANL = [Math.cos(time* 0.0001) * 12, 6, Math.sin(time* 0.0001) * 12];
+      const VIEWORIGANL = [Math.cos(time* 0.0001) * 12, 10, Math.sin(time* 0.0001) * 12];
       const render_project = m4.perspective(toRedius(60), 1, gl.canvas.width / gl.canvas.height, 1000);
       const render_view = m4.lookAt(VIEWORIGANL, [0, 0, 0], [0, 1, 0]);
 
@@ -517,8 +523,11 @@ function main() {
         });
 
         sence.forEach(item => {
-          const {buffer, vao, calculateTheUniforms} = item;
-          twgl.setUniforms(renderProgram, calculateTheUniforms(time));
+          const {buffer, vao, calculateTheUniforms, name} = item;
+          const uniforms = calculateTheUniforms(time);
+          const optical = (time & 0x8) && (selectedObject.name === name && selectedObject.name !== "plane");
+          uniforms.u_color = !optical ? uniforms.u_color:  [0.69, 0.23, 0.3, 1.0];
+          twgl.setUniforms(renderProgram, uniforms);
           gl.bindVertexArray(vao);
           twgl.drawBufferInfo(gl, buffer);
         });
