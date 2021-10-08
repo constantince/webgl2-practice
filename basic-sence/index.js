@@ -175,6 +175,26 @@ function parseOBJ(text) {
   };
 }
 
+function resizeCanvasToDisplaySize(canvas) {
+  // Lookup the size the browser is displaying the canvas in CSS pixels.
+  const dpr = window.devicePixelRatio;
+  const {width, height} = canvas.getBoundingClientRect();
+  const displayWidth  = Math.round(width * dpr);
+  const displayHeight = Math.round(height * dpr);
+
+  // Check if the canvas is not the same size.
+  const needResize = canvas.width  !== displayWidth ||
+                     canvas.height !== displayHeight;
+
+  if (needResize) {
+    // Make the canvas the same size
+    canvas.width  = displayWidth;
+    canvas.height = displayHeight;
+  }
+
+  return needResize;
+}
+
 
 
 const AMBIENTCOLOR = [1.0, 1.0, 1.0];
@@ -321,7 +341,7 @@ function main() {
         vao: cylindarVao,
         calculateTheUniforms: function(time) {
           let translation = m4.translate(m4.identity(), -1.5, 1.0, 2);
-          translation = twgl.m4.scale(translation, [0.5, 0.5, 0.5]);
+          translation = twgl.m4.scale(translation, [0.7, 0.7, 0.7]);
           const transformMatrix =m4.axisRotate(translation, [1, 1, 1], toRedius(time * 0.00001));
           return {
             u_use_shadow: true,
@@ -504,6 +524,7 @@ function main() {
 
         // render color buffer
         gl.viewport(0, 0, canvas.width, canvas.height);
+        resizeCanvasToDisplaySize(canvas)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.useProgram(renderProgram.program);
         twgl.setUniforms(renderProgram, {
@@ -519,7 +540,9 @@ function main() {
           u_diffuseColor: DIFFUSECOLOR,
           u_specularColor: SPECULARCOLOR,
           u_viewDirection: VIEWORIGANL,
-          u_color: [1.0, 1.0, 1.0, 1.0]
+          u_color: [1.0, 1.0, 1.0, 1.0],
+          u_fogDensity: 0.1,
+          u_fogColor: [0.0, 0.0, 0.0],
         });
 
         sence.forEach(item => {
