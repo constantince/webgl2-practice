@@ -180,7 +180,7 @@ function main() {
       const vao = twgl.createVAOFromBufferInfo(gl, renderProgram, buffer);
 
       material = materials[material];
-      console.log(material);
+      // console.log(material);
       sence.push({
         name: 'canon',
         buffer,
@@ -221,7 +221,7 @@ function main() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   var tick = function (time) {
     // render scenc matrixs
-    const VIEWORIGANL = [Math.cos(time * 0.001) * 10, 10, 12];
+    const VIEWORIGANL = [Math.cos(time * 0.0005) * 7, 12, 12];
     const render_project = m4.perspective(toRedius(60), 1, gl.canvas.width / gl.canvas.height, 1000);
     const render_view = m4.lookAt(VIEWORIGANL, [0, 0, 0], [0, 1, 0]);
 
