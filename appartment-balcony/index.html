@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css" />
+    <title>Appartment Balcony</title>
+</head>
+<body onload="main()">
+    <canvas id="happy-life-happy-code" width="500" height="500"></canvas>
+    <button id="forward">forward</button>
+    <button>back</button>
+</body>
+<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
+<script src="../core/gl-matrix.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
+    out vec4 v_color;
+    out vec4 v_position;
+    void main() {
+        gl_Position = a_position;
+        v_position = a_position;
+        gl_Position.z = 1.0;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+    precision mediump float;
+    uniform mat4 u_view;
+    uniform samplerCube u_skybox;
+    in vec4 v_position;
+    out vec4 FragColor;
+    void main() {
+        vec4 t = u_view * v_position;
+        FragColor = texture(u_skybox, normalize(t.xyz / t.w));
+    }
+</script>
+
+<script type="text/javascript" src="./index.js"></script>
+</html>
