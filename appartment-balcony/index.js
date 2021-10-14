@@ -137,13 +137,14 @@ function main() {
     gl.useProgram(program)
 
 
-    var tick = function(time, movedX, movedY) {
+    var tick = function(time) {
+        factor -= 0.001;
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         // console.log(0.9090760218681387 0.41663027550143233);
         const projection = m4.perspective(fieldOfViewRadians, canvas.width / canvas.height, 1, 1000);
         // let view = m4.lookAt([Math.cos(movedX * 0.0001), 0, Math.sin(movedX * 0.0001)], [0, 0, 0], [0, 1, 0]);
-        let view = m4.lookAt([Math.cos(time * 0.0001), 0, Math.sin(time * 0.0001)], [0, 0, 0], [0, 1, 0]);
+        let view = m4.lookAt([factor, 0, 0], [0, 0, 0], [0, 1, 0]);
         view = m4.inverse(view);
         let u_viewMatrix = m4.multiply(projection, view);
         u_viewMatrix = m4.inverse(u_viewMatrix);
@@ -152,15 +153,15 @@ function main() {
 
         gl.depthFunc(gl.LEQUAL);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-        window.requestAnimationFrame(tick);
-        // console.log(programInfo);
+        if( factor <= 1 && moveSwitch) {
+           window.requestAnimationFrame(tick);
+        }
     }
 
     window.requestAnimationFrame(tick);
 
     initMouseEvent(canvas, tick);
-    forward(faceInfo2, gl, texture);
+    forward(faceInfo2, gl, texture, tick);
 }
 
 function initMouseEvent(canvas, tick) {
@@ -202,21 +203,38 @@ function initMouseEvent(canvas, tick) {
   }, false)
 }
 
-function forward(face, gl, texture) {
+function forward(face, gl, texture, tick) {
   document.getElementById("forward").addEventListener('click', () => {
-    face.forEach(item => {
-      const { target, url } = item;
-      gl.texImage2D(target, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  
-      const image = new Image();
-      image.src = url;
-      image.onload = function() {
+        window.requestAnimationFrame(tick);
+        moveSwitch = true;
+        loadAllImageDone(face, gl, texture).then(res => {
+          //moveSwitch = false;
+        });     
+  })
+}
+var factor = 0;
+var moveSwitch = false;
+function loadAllImageDone(face, gl, texture) {
+    const imagePromise = face.map(item => {
+      return new Promise((resolve, reject) => {
+        const { target, url } = item;
+        gl.texImage2D(target, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        const image = new Image();
+        image.src = url;
+        image.onload = function() {
+          resolve({image, target}); 
+        }
+      })
+    });
+
+    return Promise.all(imagePromise).then(res => {
+      res.forEach(({image, target}) => {
         // Now that the image has loaded make copy it to the texture.
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
         gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
         gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-      }
-  
+      })
     });
-  })
+
+
 }
