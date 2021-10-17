@@ -145,16 +145,18 @@ function main() {
         const projection = m4.perspective(fieldOfViewRadians, canvas.width / canvas.height, 1, 1000);
         // let view = m4.lookAt([Math.cos(movedX * 0.0001), 0, Math.sin(movedX * 0.0001)], [0, 0, 0], [0, 1, 0]);
         let view = m4.lookAt([factor, 0, 0], [0, 0, 0], [0, 1, 0]);
+        console.log(factor)
         view = m4.inverse(view);
         let u_viewMatrix = m4.multiply(projection, view);
         u_viewMatrix = m4.inverse(u_viewMatrix);
         gl.uniformMatrix4fv(viewLocation, false, u_viewMatrix);
         gl.uniform1i(skyBoxLocation, 0);
+        //gl.uniform1fv(location, value2);
 
         gl.depthFunc(gl.LEQUAL);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        if( factor <= 1 && moveSwitch) {
-           window.requestAnimationFrame(tick);
+        if( moveSwitch ) {
+          window.requestAnimationFrame(tick);
         }
     }
 
@@ -207,12 +209,12 @@ function forward(face, gl, texture, tick) {
   document.getElementById("forward").addEventListener('click', () => {
         window.requestAnimationFrame(tick);
         moveSwitch = true;
-        loadAllImageDone(face, gl, texture).then(res => {
-          //moveSwitch = false;
-        });     
+        // loadAllImageDone(face, gl, texture).then(res => {
+        //   //moveSwitch = false;
+        // });     
   })
 }
-var factor = 0;
+var factor = 1.5;
 var moveSwitch = false;
 function loadAllImageDone(face, gl, texture) {
     const imagePromise = face.map(item => {
