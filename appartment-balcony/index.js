@@ -20,7 +20,7 @@ function createShaderFromScript(gl, scriptIds) {
 function toRadius(angle) {
   return angle * Math.PI / 180.00
 }
-
+var movedX = 0;
 const fieldOfViewRadians = toRadius(60);
 
 function main() {
@@ -82,7 +82,8 @@ function main() {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
         url: './neg-z-1.png',
       },
-    ] 
+    ];
+     
     const programInfo = createShaderFromScript(gl, ["vertex", "frag"]);
     const { program } = programInfo;
     const positionLocation = gl.getAttribLocation(program, "a_position");
@@ -111,21 +112,9 @@ function main() {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 
-
-    faceInfos.forEach(item => {
-      const { target, url } = item;
-      gl.texImage2D(target, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-      const image = new Image();
-      image.src = url;
-      image.onload = function() {
-        // Now that the image has loaded make copy it to the texture.
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
-        gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-      }
-
-    });
+    loadAllImageDone(faceInfos, gl, texture).then(res => {
+      window.requestAnimationFrame(tick);
+    }); 
 
     gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -137,15 +126,21 @@ function main() {
     gl.useProgram(program)
 
 
-    var tick = function(time) {
-        factor -= 0.001;
+    var tick = function(time, isMoving) {
+        
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         // console.log(0.9090760218681387 0.41663027550143233);
+        let view;
         const projection = m4.perspective(fieldOfViewRadians, canvas.width / canvas.height, 1, 1000);
-        // let view = m4.lookAt([Math.cos(movedX * 0.0001), 0, Math.sin(movedX * 0.0001)], [0, 0, 0], [0, 1, 0]);
-        let view = m4.lookAt([factor, 0, 0], [0, 0, 0], [0, 1, 0]);
-        console.log(factor)
+        if( isMoving ) {
+          view = m4.lookAt([Math.cos(movedX * 0.0001), 0, Math.sin(movedX * 0.0001)], [0, 0, 0], [0, 1, 0]);
+        } else {
+          view = m4.lookAt([factor, 0, 0], [0, 0, 0], [0, 1, 0]);
+        }
+       
+       
+        // console.log(factor)
         view = m4.inverse(view);
         let u_viewMatrix = m4.multiply(projection, view);
         u_viewMatrix = m4.inverse(u_viewMatrix);
@@ -153,14 +148,25 @@ function main() {
         gl.uniform1i(skyBoxLocation, 0);
         //gl.uniform1fv(location, value2);
 
+
+
         gl.depthFunc(gl.LEQUAL);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        if( moveSwitch ) {
-          window.requestAnimationFrame(tick);
+        if(moveSwitch && factor > 0) {
+          factor -= 0.02;
+          window.requestAnimationFrame((time) => tick(time, 0));
         }
+
+        if( factor <= 0) {
+          moveSwitch = false;
+          loadAllImageDone(faceInfo2, gl, texture).then(res => {
+            factor = 1.5;
+          }); 
+        }
+
     }
 
-    window.requestAnimationFrame(tick);
+    // window.requestAnimationFrame(tick);
 
     initMouseEvent(canvas, tick);
     forward(faceInfo2, gl, texture, tick);
@@ -168,7 +174,6 @@ function main() {
 
 function initMouseEvent(canvas, tick) {
   var status = null;
-  var movedX = 0;
   var start = 0;
 
   var movedY = 0;
@@ -195,7 +200,7 @@ function initMouseEvent(canvas, tick) {
         movedY -= y;
       }
      
-      tick(movedX, movedY);
+      window.requestAnimationFrame((t) => tick(t, true));
     }
   }, false)
 
@@ -209,13 +214,13 @@ function forward(face, gl, texture, tick) {
   document.getElementById("forward").addEventListener('click', () => {
         window.requestAnimationFrame(tick);
         moveSwitch = true;
-        // loadAllImageDone(face, gl, texture).then(res => {
-        //   //moveSwitch = false;
-        // });     
+           
   })
 }
 var factor = 1.5;
 var moveSwitch = false;
+
+
 function loadAllImageDone(face, gl, texture) {
     const imagePromise = face.map(item => {
       return new Promise((resolve, reject) => {
