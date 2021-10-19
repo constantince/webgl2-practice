@@ -43,13 +43,72 @@
     out vec4 FragColor;
 
     void main() {
-        vec4 col = vec4(1.0);
-        if( has_texture >= 3.0) {
-            col = texture(u_texture, v_texcoord);
-        }
+        
+        vec4 col = texture(u_texture, v_texcoord) * vec4(0.5, 0.5, 0.5, 1.0);
+        
         FragColor = col;
     }
 </script>
 
+<script type="x-shader/x-vertex" id="vertex1">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
+    in vec2 a_texcoord;
+    in vec4 a_normal;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    uniform mat4 u_normalMatrix;
+    out vec4 v_color;
+    out vec2 v_texcoord;
+    out vec3 v_normal;
+    out vec3 v_worldPosition;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+        v_texcoord = a_texcoord;
+        v_worldPosition = u_world * a_position;
+        v_normal = vec3(u_normalMatrix * a_normal);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="frag1">#version 300 es
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform float u_color;
+
+
+    uniform vec3 u_ambient;
+    uniform float f_ambient;
+
+    uniform vec3 u_diffuse;
+    uniform float f_diffuse;
+
+    uniform vec3 u_lightPosition;
+
+
+    in vec4 v_color;
+    in vec2 v_texcoord;
+    in vec3 v_worldPosition;
+    in vec3 v_normal;
+
+    out vec4 FragColor;
+
+    void main() {
+        
+        vec4 col = vec4(1.0, 0.0, 1.0, 1.0);
+        vec3 worldPosition = v_worldPosition.xyz / v_worldPosition.w;
+        vec3 ambient = u_color * u_ambient * f_ambient;
+        
+        vec3 normal = normalize(v_normal);
+        vec3 lightDirection = normalize(u_lightPosition - worldPosition);
+        float fDot = clamp(dot(lightDirection, normal), 0.0, 1.0);
+
+        vec3 diffuse = u_color * u_diffuse * f_diffuse * fDot;
+        
+        FragColor = diffuse + ambient;
+    }
+</script>
 <script type="text/javascript" src="./index.js"></script>
 </html>
