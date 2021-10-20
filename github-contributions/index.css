@@ -11,7 +11,19 @@ html {
   body {
     background-color: #aaa;
     font-family: Sans-Serif;
+    
   }
+
+  body .ytd {
+    position: absolute;
+    width: 100px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    display: none;
+    background-color: white;
+  }
+  
   
   canvas {
     background-color: #fff;

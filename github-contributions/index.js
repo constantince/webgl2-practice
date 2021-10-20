@@ -21,8 +21,29 @@ function toRaius(a) {
   return a * 180 / Math.PI;
 }
 
+const contributions = [{
+  date: '2021/01/01',
+  num: 4
+},{
+  date: '2021/01/02',
+  num: 2
+},{
+  date: '2021/01/03',
+  num: 3
+}]
+
 const fieldView = toRaius(60);
 
+const AMBIENTCOLOR = [0.7, 0.7, 0.7, 1];
+const F_AMBIENTCOLOR = 1.0;
+
+const DIFFUSECOLOR = [1, 1, 1, 1];
+const F_DIFFUSECOLOR = .2;
+
+const LIGHTSOURCE = [2, 4, 5];
+
+const OFFSCREEN_WIDTH = 2040;
+const OFFSCREEN_HEIGH = 2040;
 
 
 function makeTexture (gl) {
@@ -105,6 +126,20 @@ function makeTexture (gl) {
 
   return texture;
 }
+var selectedObject = {};
+function limit(value) {
+ var max = value;
+ var height = 0;
+ return function(time) {
+  if( height >= max) {
+    return max;
+  }
+  height = Math.abs(Math.sin(time * 0.0005)) + 0.01;
+  return height;
+ }
+}
+
+const growCylinder1 = limit(1);
 
 function main() {
     const canvas = document.getElementById("happy-life-happy-code");
@@ -116,24 +151,78 @@ function main() {
     twgl.setAttributePrefix("a_");
     const programInfo = createShaderFromScript(gl, ["vertex", "frag"]);
     const programInfo1 = createShaderFromScript(gl, ["vertex1", "frag1"]);
-    const { program } = programInfo;
-    const program1 = programInfo1.program;
+    const programPicking = createShaderFromScript(gl, ["vertex-picking", "frag-picking"]);
+    const program = programInfo.program;
+    const program1 = programInfo1.program; // 
+    const program2 = programPicking.program; // picking program
 
-    function createCylinders(x, y) {
-      let world = twgl.m4.scale(m4.identity(), [0.1, .5, .1]);
-      world = twgl.m4.translate(world, [x, .5, y]);
-      twgl.setUniforms(programInfo1, {
-        u_world: world
+    function createCylinders(x, y, color, time, p, current) {
+     
+      const h = growCylinder1(time);
+      let world = twgl.m4.scale(m4.identity(), [0.1, h, .1]);
+      world = twgl.m4.translate(world, [x, h * 0.5, y]);
+      const normalMatrix = m4.transpose(m4.inverse(world));
+      const id = x + 1;
+      twgl.setUniforms(p, {
+        u_world: world,
+        u_color: current ? current : color,
+        u_normalMatrix: normalMatrix,
+        u_id: [
+          ((id >>  0) & 0xFF) / 0xFF,
+          ((id >>  8) & 0xFF) / 0xFF,
+          ((id >> 16) & 0xFF) / 0xFF,
+          ((id >> 24) & 0xFF) / 0xFF,
+        ]
       });
       gl.bindVertexArray(cubevao);
       twgl.drawBufferInfo(gl, cubeBuffInfo);
     }
+
+    // Create a texture to render to
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // create a depth renderbuffer
+    const depthBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+
+    const pickFbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+
+    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    const level = 0;
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+    // make a depth buffer and the same size as the targetTexture
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
 
     const cubeBuffInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
     const cubevao = twgl.createVAOFromBufferInfo(gl, programInfo1, cubeBuffInfo);
 
     const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 1, 1);
     const planevao = twgl.createVAOFromBufferInfo(gl, programInfo, planeBufferInfo);
+
+    function setFramebufferAttachmentSizes(width, height) {
+      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+      // define size and format of level 0
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const border = 0;
+      const format = gl.RGBA;
+      const type = gl.UNSIGNED_BYTE;
+      const data = null;
+      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    width, height, border,
+                    format, type, data);
+
+      gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+    }
+
+    setFramebufferAttachmentSizes(OFFSCREEN_WIDTH, OFFSCREEN_HEIGH);
     // gl.useProgram(program);
     
     gl.enable(gl.DEPTH_TEST);
@@ -146,7 +235,7 @@ function main() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.useProgram(program);
         const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
-        let view = m4.lookAt([Math.cos(time * 0.0001) * 3, 2, Math.sin(time * 0.0001) * 3], [0, 0, 0], [0, 1, 0]);
+        let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
         view = m4.inverse(view);
         let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.2]);
 
@@ -160,26 +249,129 @@ function main() {
         gl.bindVertexArray(planevao);
         twgl.drawBufferInfo(gl, planeBufferInfo);
 
+
+        
+
+        // render pick frame buffer
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.useProgram(program2);
+        twgl.setUniforms(programPicking, {
+          u_projection: projection,
+          u_view: view,
+          u_world: m4.identity(),
+        });
+
+        contributions.forEach((item, index) => {
+          createCylinders(index, index, [0.76, 0.45, 0.94, 1.0], time, programPicking);
+        });
+
+
+         
+        const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
+        const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
+        const data = new Uint8Array(4);
+        gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+        if( data[0] > 0 ) {
+            selectedObject = contributions[data[0] - 1];
+            ytd.innerHTML = selectedObject.date;
+            ytd.style.display = "block";
+            
+        } else {
+            ytd.style.display = "none";
+            selectedObject = {};
+        }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+
+
         gl.useProgram(program1);
 
         world = twgl.m4.translate(world, [0, -.51, 0]);
 
+        const normalMatrix = m4.transpose(m4.inverse(world));
         twgl.setUniforms(programInfo1, {
           u_projection: projection,
           u_view: view,
-          u_world: world
+          u_world: world,
+          u_color: [0.0, 1.0, 0.0, 1.0],
+          u_ambient: AMBIENTCOLOR,
+          f_ambient: F_AMBIENTCOLOR,
+          u_diffuse: DIFFUSECOLOR,
+          f_diffuse: F_DIFFUSECOLOR,
+          u_lightPosition: LIGHTSOURCE,
+          u_normalMatrix: normalMatrix,
         });
         
         gl.bindVertexArray(cubevao);
         twgl.drawBufferInfo(gl, cubeBuffInfo);
 
-        createCylinders(1, 2);
-        createCylinders(0, 0);
+        
+
+
+        contributions.forEach((item, index) => {
+          const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
+          createCylinders(index, index, [0.76, 0.45, 0.94, 1.0], time, programInfo1, current);
+        })
+        // createCylinders(1, 2, [1, 0.45, 0.34, 1.0]);
+        // createCylinders(0, 0, [0.76, 0.45, 0.94, 1.0], time);
+
+        // createCylinders(1, 1, [0.76, 0.45, 0.94, 1.0], time);
+
+        // createCylinders(2, 3, [0.76, 0.45, 0.94, 1.0], time);
 
         window.requestAnimationFrame(tick);
 
     }
 
     window.requestAnimationFrame(tick);
+    // start to listen canvas mouse event
+    eventStartUp(canvas)
 }
+
+function createFrameBuffer(gl) {
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+  const texture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, OFFSCREEN_WIDTH, OFFSCREEN_HEIGH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const rb = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, OFFSCREEN_WIDTH, OFFSCREEN_HEIGH)
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+  return {fbo, texture}
+}
+
+var mouseX = 0;
+var mouseY = 0;
+var mouseupActived = false;
+var ytd = document.querySelector(".ytd");
+function eventStartUp(canvas) {
+  
+  canvas && canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    ytd.style.left = e.clientX + 'px';
+    ytd.style.top = e.clientY + 'px';
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY -rect.top;
+    mouseupActived = true;
+  });
+}
+
 
