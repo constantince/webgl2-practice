@@ -23,14 +23,53 @@ function toRaius(a) {
 
 const contributions = [{
   date: '2021/01/01',
-  num: 4
-},{
+  num: 4,
+  limit: limit(.4)
+}
+,{
   date: '2021/01/02',
-  num: 2
+  num: 1,
+  limit: limit(.1)
 },{
   date: '2021/01/03',
-  num: 3
-}]
+  num: 5,
+  limit: limit(.5)
+}
+,{
+  date: '2021/01/04',
+  num: 10,
+  limit: limit(1)
+}
+
+,{
+  date: '2021/01/05',
+  num: 2,
+  limit: limit(.2)
+}
+
+,{
+  date: '2021/01/06',
+  num: 1,
+  limit: limit(.1)
+}
+
+,{
+  date: '2021/01/07',
+  num: 8,
+  limit: limit(.8)
+}
+,{
+  date: '2021/01/08',
+  num: 3,
+  limit: limit(.3)
+}
+,{
+  date: '2021/01/09',
+  num: 7,
+  limit: limit(.7)
+}
+
+]
 
 const fieldView = toRaius(60);
 
@@ -41,7 +80,7 @@ const DIFFUSECOLOR = [1, 1, 1, 1];
 const F_DIFFUSECOLOR = .2;
 
 const LIGHTSOURCE = [2, 4, 5];
-
+const LIGHTSOURCE2 = [-2, 4, -5];
 const OFFSCREEN_WIDTH = 2040;
 const OFFSCREEN_HEIGH = 2040;
 
@@ -55,7 +94,7 @@ function makeTexture (gl) {
     const level = 0;
     const internalFormat = gl.R8;
     const width = 7;
-    const height = 22;
+    const height = 23;
     const border = 0;
     const format = gl.RED;
     const type = gl.UNSIGNED_BYTE;
@@ -82,6 +121,7 @@ function makeTexture (gl) {
         0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
         0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
         0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
+        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
         // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
         // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
         // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
@@ -156,13 +196,12 @@ function main() {
     const program1 = programInfo1.program; // 
     const program2 = programPicking.program; // picking program
 
-    function createCylinders(x, y, color, time, p, current) {
-     
-      const h = growCylinder1(time);
-      let world = twgl.m4.scale(m4.identity(), [0.1, h, .1]);
+    function createCylinders(x, y, color, time, p, current, index, cb, num) {
+      const h = cb ? cb(time * num / 15): growCylinder1(time * num);
+      let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
       world = twgl.m4.translate(world, [x, h * 0.5, y]);
       const normalMatrix = m4.transpose(m4.inverse(world));
-      const id = x + 1;
+      const id = index + 1;
       twgl.setUniforms(p, {
         u_world: world,
         u_color: current ? current : color,
@@ -235,9 +274,10 @@ function main() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.useProgram(program);
         const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
-        let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
+        // let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
+        view = m4.lookAt([Math.cos(time * 0.0002) * 2, 2, Math.sin(time * 0.0002) * 2], [0, 0, 0], [0, 1, 0]);
         view = m4.inverse(view);
-        let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.2]);
+        let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
 
         twgl.setUniforms(programInfo, {
           u_projection: projection,
@@ -263,8 +303,25 @@ function main() {
           u_world: m4.identity(),
         });
 
+        var _offset = 1;
         contributions.forEach((item, index) => {
-          createCylinders(index, index, [0.76, 0.45, 0.94, 1.0], time, programPicking);
+          const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
+          const offset = index % 7;
+          const num = item.num;
+          if( offset === 0 ) _offset--;
+          const offsetX = ((offset * 1) - 3) * 2;
+          const offsetY = ((_offset * 1) + 11) * 2;
+          createCylinders(
+            offsetX,
+            offsetY,
+            [0.76, 0.45, 0.94, 1.0], 
+            time, 
+            programPicking, 
+            null, 
+            index,
+            item.limit,
+            num
+          );
         });
 
 
@@ -302,6 +359,7 @@ function main() {
           u_diffuse: DIFFUSECOLOR,
           f_diffuse: F_DIFFUSECOLOR,
           u_lightPosition: LIGHTSOURCE,
+          u_lightPosition2: LIGHTSOURCE2,
           u_normalMatrix: normalMatrix,
         });
         
@@ -310,17 +368,26 @@ function main() {
 
         
 
-
+        var _offset = 1;
         contributions.forEach((item, index) => {
           const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
-          createCylinders(index, index, [0.76, 0.45, 0.94, 1.0], time, programInfo1, current);
-        })
-        // createCylinders(1, 2, [1, 0.45, 0.34, 1.0]);
-        // createCylinders(0, 0, [0.76, 0.45, 0.94, 1.0], time);
-
-        // createCylinders(1, 1, [0.76, 0.45, 0.94, 1.0], time);
-
-        // createCylinders(2, 3, [0.76, 0.45, 0.94, 1.0], time);
+          const num = item.num;
+          const offset = index % 7;
+          if( offset === 0 ) _offset--;
+          const offsetX = ((offset * 1) - 3) * 2;
+          const offsetY = ((_offset * 1) + 11) * 2;
+          createCylinders(
+            offsetX,
+            offsetY,
+            [0.76, 0.45, 0.94, 0.1 * num],
+            time,
+            programInfo1,
+            current,
+            index,
+            item.limit,
+            num
+          );
+        });
 
         window.requestAnimationFrame(tick);
 
@@ -329,33 +396,6 @@ function main() {
     window.requestAnimationFrame(tick);
     // start to listen canvas mouse event
     eventStartUp(canvas)
-}
-
-function createFrameBuffer(gl) {
-  const fbo = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-
-  const texture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, OFFSCREEN_WIDTH, OFFSCREEN_HEIGH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  const rb = gl.createRenderbuffer();
-  gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, OFFSCREEN_WIDTH, OFFSCREEN_HEIGH)
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.bindTexture(gl.TEXTURE_2D, null);
-  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-  return {fbo, texture}
 }
 
 var mouseX = 0;
