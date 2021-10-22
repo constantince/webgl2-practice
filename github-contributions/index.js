@@ -21,7 +21,21 @@ function toRaius(a) {
   return a * 180 / Math.PI;
 }
 
-const contributions = [{
+
+const BASICCOLORS = [
+  [235, 237, 240, 255],
+  [15, 233, 168, 255],
+  [64, 196, 99, 255],
+  [48, 161, 78, 255],
+  [33, 110, 57, 255]
+];
+
+const contributions = [
+  {
+    date: '2020/12/31',
+    num: 0,
+    limit: limit(.4)
+  },{
   date: '2021/01/01',
   num: 4,
   limit: limit(.4)
@@ -314,7 +328,7 @@ function main() {
           createCylinders(
             offsetX,
             offsetY,
-            [0.76, 0.45, 0.94, 1.0], 
+            [1.0, 1.0, 1.0, 1.0], 
             time, 
             programPicking, 
             null, 
@@ -353,7 +367,7 @@ function main() {
           u_projection: projection,
           u_view: view,
           u_world: world,
-          u_color: [0.0, 1.0, 0.0, 1.0],
+          u_color: [1.0, 1.0, 1.0, 1.0],
           u_ambient: AMBIENTCOLOR,
           f_ambient: F_AMBIENTCOLOR,
           u_diffuse: DIFFUSECOLOR,
@@ -376,10 +390,11 @@ function main() {
           if( offset === 0 ) _offset--;
           const offsetX = ((offset * 1) - 3) * 2;
           const offsetY = ((_offset * 1) + 11) * 2;
+          const c = BASICCOLORS[Math.min(Math.ceil(num / 2), 4)];
           createCylinders(
             offsetX,
             offsetY,
-            [0.76, 0.45, 0.94, 0.1 * num],
+            c.map(v => v/255.0),
             time,
             programInfo1,
             current,
@@ -403,13 +418,13 @@ var mouseY = 0;
 var mouseupActived = false;
 var ytd = document.querySelector(".ytd");
 function eventStartUp(canvas) {
-  
+  const rect = canvas.getBoundingClientRect();
   canvas && canvas.addEventListener("mousemove", (e) => {
-    const rect = canvas.getBoundingClientRect();
+   
     ytd.style.left = e.clientX + 'px';
     ytd.style.top = e.clientY + 'px';
     mouseX = e.clientX - rect.left;
-    mouseY = e.clientY -rect.top;
+    mouseY = e.clientY - rect.top;
     mouseupActived = true;
   });
 }
