@@ -211,7 +211,8 @@ function main() {
     const program2 = programPicking.program; // picking program
 
     function createCylinders(x, y, color, time, p, current, index, cb, num) {
-      const h = cb ? cb(time * num / 15): growCylinder1(time * num);
+      // const h = cb ? cb(time * num / 15): growCylinder1(time * num);
+      const h = Math.min(time * num / 15 / 1000, num / 10);
       let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
       world = twgl.m4.translate(world, [x, h * 0.5, y]);
       const normalMatrix = m4.transpose(m4.inverse(world));
