@@ -42,7 +42,7 @@ function getNextDay(today) {
   return `${y}/${m}/${d}`;
 }
 let contributions = [{date: '2021/01/01', num: 3}];
-const m = new Array(160).fill(0).reduce((prev,next) => {
+const m = new Array(120).fill(0).reduce((prev,next) => {
   const nextDay = getNextDay(prev);
   contributions.push({
     date: nextDay,
@@ -74,66 +74,36 @@ function makeTexture (gl) {
   
   {
     const level = 0;
-    const internalFormat = gl.R8;
+    const internalFormat = gl.R8UI;
     const width = 7;
     const height = 23;
     const border = 0;
-    const format = gl.RED;
+    const format = gl.RED_INTEGER;
     const type = gl.UNSIGNED_BYTE;
     const data = new Uint8Array([
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
-        // 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF,
-        // 0xCC, 0xFF, 0xCC, 0xFF, 0xCC, 0xFF, 0xCC,
+        0xFF, 0x00, 0xFF, 0xCC, 0xCC, 0xCC, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     ]);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border,
@@ -178,11 +148,14 @@ function main() {
     const program1 = programInfo1.program; // 
     const program2 = programPicking.program; // picking program
 
-    function createCylinders(x, y, color, time, p, current, index, cb, num) {
+    function createCylinders(x, y, color, time, p, current, index, cb, num, angle, angleY) {
       // const h = cb ? cb(time * num / 15): growCylinder1(time * num);
       const h = Math.min(time * num / 15 / 1000, num / 10);
       let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
       world = twgl.m4.translate(world, [x, h * 0.5, y]);
+      var rotation = twgl.m4.rotateY(m4.identity(), toRaius(angle));
+      rotation = twgl.m4.rotateX(rotation, toRaius(angleY));
+      world = twgl.m4.multiply(rotation, world);
       const normalMatrix = m4.transpose(m4.inverse(world));
       const id = index + 1;
       twgl.setUniforms(p, {
@@ -249,21 +222,24 @@ function main() {
     
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    var currentAngle = [0.0, 0.0];
     var t = makeTexture(gl);
     var tick = function(time) {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.useProgram(program);
         const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
-        // let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
-        view = m4.lookAt([Math.cos(time * 0.0002) * 2, 2, Math.sin(time * 0.0002) * 2], [0, 0, 0], [0, 1, 0]);
+        // const projection = twgl.m4.ortho(-1, 1, -1, 1, 2, 100);
+        // console.log(currentAngle[1] / 10)
+        let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
+        // view = m4.lookAt([Math.cos(time * 0.0002) * 2, 2, Math.sin(time * 0.0002) * 2], [0, 0, 0], [0, 1, 0]);
         view = m4.inverse(view);
         let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
 
         twgl.setUniforms(programInfo, {
           u_projection: projection,
+          u_color: [1.0, 1.0, 1.0, 1.0],
           u_view: view,
           u_world: world,
           u_texture: t
@@ -303,7 +279,9 @@ function main() {
             null, 
             index,
             item.limit,
-            num
+            num,
+            currentAngle[1],
+            currentAngle[0]
           );
         });
 
@@ -313,7 +291,7 @@ function main() {
         const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
         const data = new Uint8Array(4);
         gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-        if( data[0] > 0 ) {
+        if( data[0] > 0 && contributions[data[0] - 1]) {
             selectedObject = contributions[data[0] - 1];
             ytd.innerHTML = selectedObject.date;
             ytd.style.display = "block";
@@ -328,8 +306,12 @@ function main() {
 
 
         gl.useProgram(program1);
-
+        
         world = twgl.m4.translate(world, [0, -.51, 0]);
+        var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+        rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+        // console.log(toRaius(currentAngle[1]));
+        world  = twgl.m4.multiply(rotation, world);
 
         const normalMatrix = m4.transpose(m4.inverse(world));
         twgl.setUniforms(programInfo1, {
@@ -369,24 +351,32 @@ function main() {
             current,
             index,
             item.limit,
-            num
+            num,
+            currentAngle[1],
+            currentAngle[0]
           );
         });
-
-        window.requestAnimationFrame(tick);
-
+      //  currentAngle = [0.0, 0.0];
+        // window.requestAnimationFrame(tick);
+        // console.log(currentAngle);
     }
 
-    window.requestAnimationFrame(tick);
+    // window.requestAnimationFrame(tick);
     // start to listen canvas mouse event
-    eventStartUp(canvas)
+   
+    initEventHandlers(canvas, currentAngle, tick);
+
+    console.log(currentAngle);
+    const rafTickFunctionCounterTimes = excutedCountes(tick, 3000);
+    rafTickFunctionCounterTimes();
+    eventStartUp(canvas, tick)
 }
 
 var mouseX = 0;
 var mouseY = 0;
 var mouseupActived = false;
 var ytd = document.querySelector(".ytd");
-function eventStartUp(canvas) {
+function eventStartUp(canvas, tick) {
   const rect = canvas.getBoundingClientRect();
   canvas && canvas.addEventListener("mousemove", (e) => {
    
@@ -395,7 +385,78 @@ function eventStartUp(canvas) {
     mouseX = e.clientX - rect.left;
     mouseY = e.clientY - rect.top;
     mouseupActived = true;
+    window.requestAnimationFrame(tick);
   });
+}
+
+function makeCover() {
+  var coverDiv = document.createElement("div");
+  coverDiv.style.height = document.body.clientHeight + 'px';
+  coverDiv.style.width = document.body.clientWidth + 'px';
+  coverDiv.style.top = '0px';
+  coverDiv.style.left = '0px';
+  coverDiv.style.position = "absolute";
+  document.body.appendChild(coverDiv);
+  return coverDiv;
+}
+
+
+function excutedCountes(func, sec) {
+  var raf; var start;var cover;
+
+  function Counters (time) {
+    func(time);
+    // console.log(Date.now() - start);
+    if( Date.now() - start >= sec) {
+      window.cancelAnimationFrame(raf);
+      cover.style.display = "none";
+    } else {
+      raf = window.requestAnimationFrame(Counters);
+    }
+  }
+
+  return function result() {
+    cover = makeCover();
+    start = Date.now();
+    window.requestAnimationFrame(Counters);
+  }
+
+}
+
+function initEventHandlers(canvas, currentAngle, tick) {
+  var dragging = false;
+  var lastX = -1, lastY = -1;
+
+  canvas.onmousedown = function (ev) {
+    var x = ev.clientX, y = ev.clientY;
+
+    var rect = ev.target.getBoundingClientRect();
+
+    if( rect.left <= x && x < rect.right && rect.top <=y && y < rect.bottom) {
+      lastX = x; lastY = y;
+      dragging = true;
+    }
+  }
+
+  canvas.onmouseup = function(ev) {
+    dragging = false;
+  }
+
+  canvas.onmousemove = function(ev) {
+      var x = ev.clientX, y = ev.clientY;
+
+      if( dragging ) {
+        var factor = .1 / canvas.height;
+        var dx = factor * (x - lastX);
+        var dy = factor * (y - lastY);
+
+        currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+        currentAngle[1] = currentAngle[1] + dx;
+
+        tick()
+      }
+      lastX = x, lastY =y;
+  }
 }
 
 

@@ -39,13 +39,13 @@
     uniform vec2 u_mouse;
     uniform sampler2D u_texture;
     uniform float has_texture;
-    in vec4 v_color;
+    uniform vec4 u_color;
     in vec2 v_texcoord;
     out vec4 FragColor;
 
     void main() {
         
-        vec4 col = texture(u_texture, v_texcoord) * vec4(0.5, 0.5, 0.5, 1.0);
+        vec4 col = texture(u_texture, v_texcoord) * u_color;
         
         FragColor = col;
     }
