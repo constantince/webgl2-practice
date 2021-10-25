@@ -30,60 +30,28 @@ const BASICCOLORS = [
   [33, 110, 57, 255]
 ];
 
-const contributions = [
-  {
-    date: '2020/12/31',
-    num: 0,
-    limit: limit(.4)
-  },{
-  date: '2021/01/01',
-  num: 4,
-  limit: limit(.4)
-}
-,{
-  date: '2021/01/02',
-  num: 1,
-  limit: limit(.1)
-},{
-  date: '2021/01/03',
-  num: 5,
-  limit: limit(.5)
-}
-,{
-  date: '2021/01/04',
-  num: 10,
-  limit: limit(1)
-}
+// const begin = new Date("2021/01/01");
 
-,{
-  date: '2021/01/05',
-  num: 2,
-  limit: limit(.2)
+function getNextDay(today) {
+  const todayStramp = new Date(today).getTime();
+  const nextDayStramp = todayStramp + (24 * 60 * 60 * 1000);
+  const t = new Date(nextDayStramp);
+  const y = t.getFullYear();
+  const m = t.getMonth() + 1;
+  const d = t.getDate();
+  return `${y}/${m}/${d}`;
 }
+let contributions = [{date: '2021/01/01', num: 3}];
+const m = new Array(160).fill(0).reduce((prev,next) => {
+  const nextDay = getNextDay(prev);
+  contributions.push({
+    date: nextDay,
+    num: Math.floor(Math.random() * 10)
+  });
+  return nextDay;
+}, contributions[0].date);
 
-,{
-  date: '2021/01/06',
-  num: 1,
-  limit: limit(.1)
-}
-
-,{
-  date: '2021/01/07',
-  num: 8,
-  limit: limit(.8)
-}
-,{
-  date: '2021/01/08',
-  num: 3,
-  limit: limit(.3)
-}
-,{
-  date: '2021/01/09',
-  num: 7,
-  limit: limit(.7)
-}
-
-]
+// console.log(contributions);
 
 const fieldView = toRaius(60);
 
