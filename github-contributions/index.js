@@ -42,7 +42,7 @@ function getNextDay(today) {
   return `${y}/${m}/${d}`;
 }
 let contributions = [{date: '2021/01/01', num: 3}];
-const m = new Array(120).fill(0).reduce((prev,next) => {
+const m = new Array(1).fill(0).reduce((prev,next) => {
   const nextDay = getNextDay(prev);
   contributions.push({
     date: nextDay,
@@ -74,14 +74,14 @@ function makeTexture (gl) {
   
   {
     const level = 0;
-    const internalFormat = gl.R8UI;
+    const internalFormat = gl.R8;
     const width = 7;
     const height = 23;
     const border = 0;
-    const format = gl.RED_INTEGER;
+    const format = gl.RED;
     const type = gl.UNSIGNED_BYTE;
     const data = new Uint8Array([
-        0xFF, 0x00, 0xFF, 0xCC, 0xCC, 0xCC, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xCC, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -118,6 +118,7 @@ function makeTexture (gl) {
 
   return texture;
 }
+
 var selectedObject = {};
 function limit(value) {
  var max = value;
@@ -197,8 +198,22 @@ function main() {
     const cubeBuffInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
     const cubevao = twgl.createVAOFromBufferInfo(gl, programInfo1, cubeBuffInfo);
 
-    const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 1, 1);
+    const planeBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 1, 1, 1, 1);
     const planevao = twgl.createVAOFromBufferInfo(gl, programInfo, planeBufferInfo);
+
+    var arrays = {
+      position: { numComponents: 3, data: [
+        -0.5, 0.5, 0, 0.5, 0.5, 0, 0.5, -0.5, 0, -0.5, -0.5, 0,
+        -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5
+      ]},
+      indices:  { numComponents: 8, data: [
+        0, 1, 1, 2, 2, 3, 3, 5,
+        4, 5, 5, 6, 6, 7, 7, 4
+      ]}    
+    };
+    var emptyRectBuffer = twgl.createBufferInfoFromArrays(gl, arrays);
+    // var emptyRectBuffer = twgl.drawBufferInfo(gl, emptyRect, gl.LINES);
+    var emptyVao = twgl.createVAOFromBufferInfo(gl, programInfo, emptyRectBuffer);
 
     function setFramebufferAttachmentSizes(width, height) {
       gl.bindTexture(gl.TEXTURE_2D, targetTexture);
@@ -220,11 +235,44 @@ function main() {
     setFramebufferAttachmentSizes(OFFSCREEN_WIDTH, OFFSCREEN_HEIGH);
     // gl.useProgram(program);
     
+
+    
+
+    // const textures = twgl.createTextures(gl, {
+    //   stripe: {
+    //     mag: gl.NEAREST,
+    //     min: gl.LINEAR,
+    //     format: gl.LUMINANCE,
+    //     src: new Uint8Array([
+    //       255, 128, 255, 128, 
+    //       255, 128, 255, 128,
+    //     ]),
+    //     width: .1,
+    //   },
+    //   checker: {
+    //     mag: gl.NEAREST,
+    //     min: gl.LINEAR,
+    //     src: [
+    //       255,255,255,255,
+    //       192,192,192,255,
+    //       192,192,192,255,
+    //       255,255,255,255,
+    //       255,255,255,255,
+    //       192,192,192,255,
+    //       192,192,192,255,
+    //       255,255,255,255,
+    //     ],
+    //     width: 1
+    //   },
+    // });
+
+    // console.log(textures);
+    
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
     var currentAngle = [0.0, 0.0];
-    var t = makeTexture(gl);
+    // var t = makeTexture(gl);
     var tick = function(time) {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -235,18 +283,39 @@ function main() {
         let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
         // view = m4.lookAt([Math.cos(time * 0.0002) * 2, 2, Math.sin(time * 0.0002) * 2], [0, 0, 0], [0, 1, 0]);
         view = m4.inverse(view);
-        let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
 
+
+        let world = twgl.m4.scale(m4.identity(), [0.71, .201, 0.0]);
+        world = twgl.m4.translate(world, [0, -.51, 0]);
+        var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+        rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+        world = twgl.m4.multiply(rotation, world);
         twgl.setUniforms(programInfo, {
           u_projection: projection,
-          u_color: [1.0, 1.0, 1.0, 1.0],
+          u_color: [1.0, 0.0, 0.0, 1.0],
           u_view: view,
           u_world: world,
-          u_texture: t
         });
 
-        gl.bindVertexArray(planevao);
-        twgl.drawBufferInfo(gl, planeBufferInfo);
+        gl.bindVertexArray(emptyVao);
+        twgl.drawBufferInfo(gl, emptyRectBuffer, gl.LINES);
+
+        // world = twgl.m4.scale(m4.identity(), [0.31, 2.3, 0.0]);
+        // world = twgl.m4.translate(world, [0, -.51, 0]);
+        // var rotation1 = twgl.m4.rotateY(m4.identity(), toRaius(90.0));
+
+        // var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+        // rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+        // world = twgl.m4.multiply(rotation, world);
+        // world = twgl.m4.multiply(world, rotation1);
+        // twgl.setUniforms(programInfo, {
+        //   // u_projection: projection,
+        //   u_color: [0.0, 1.0, 0.0, 1.0],
+        //   // u_view: view,
+        //   u_world: world,
+        // });
+        // gl.bindVertexArray(emptyVao);
+        // twgl.drawBufferInfo(gl, emptyRectBuffer, gl.LINES);
 
 
         
@@ -264,7 +333,7 @@ function main() {
 
         var _offset = 1;
         contributions.forEach((item, index) => {
-          const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
+          // const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
           const offset = index % 7;
           const num = item.num;
           if( offset === 0 ) _offset--;
@@ -293,11 +362,11 @@ function main() {
         gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
         if( data[0] > 0 && contributions[data[0] - 1]) {
             selectedObject = contributions[data[0] - 1];
-            ytd.innerHTML = selectedObject.date;
-            ytd.style.display = "block";
+            // ytd.innerHTML = selectedObject.date;
+            // ytd.style.display = "block";
             
         } else {
-            ytd.style.display = "none";
+            // ytd.style.display = "none";
             selectedObject = {};
         }
 
@@ -307,6 +376,8 @@ function main() {
 
         gl.useProgram(program1);
         
+        // world = twgl.m4.translate(world, [0, -.51, 0]);
+        world = twgl.m4.scale(m4.identity(), [0.71, .2, 2.3]);
         world = twgl.m4.translate(world, [0, -.51, 0]);
         var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
         rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
@@ -318,7 +389,7 @@ function main() {
           u_projection: projection,
           u_view: view,
           u_world: world,
-          u_color: [1.0, 1.0, 1.0, 1.0],
+          u_color: [.9, .9, .9, 1.0],
           u_ambient: AMBIENTCOLOR,
           f_ambient: F_AMBIENTCOLOR,
           u_diffuse: DIFFUSECOLOR,
@@ -331,31 +402,31 @@ function main() {
         gl.bindVertexArray(cubevao);
         twgl.drawBufferInfo(gl, cubeBuffInfo);
 
+        // var _offset = 1;
+        // contributions.forEach((item, index) => {
+        //   const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
+        //   const num = item.num;
+        //   const offset = index % 7;
+        //   if( offset === 0 ) _offset--;
+        //   const offsetX = ((offset * 1) - 3) * 2;
+        //   const offsetY = ((_offset * 1) + 11) * 2;
+        //   const c = BASICCOLORS[Math.min(Math.ceil(num / 2), 4)];
+        //   createCylinders(
+        //     offsetX,
+        //     offsetY,
+        //     c.map(v => v/255.0),
+        //     time,
+        //     programInfo1,
+        //     current,
+        //     index,
+        //     item.limit,
+        //     num,
+        //     currentAngle[1],
+        //     currentAngle[0]
+        //   );
+        // });
         
 
-        var _offset = 1;
-        contributions.forEach((item, index) => {
-          const current = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : null;
-          const num = item.num;
-          const offset = index % 7;
-          if( offset === 0 ) _offset--;
-          const offsetX = ((offset * 1) - 3) * 2;
-          const offsetY = ((_offset * 1) + 11) * 2;
-          const c = BASICCOLORS[Math.min(Math.ceil(num / 2), 4)];
-          createCylinders(
-            offsetX,
-            offsetY,
-            c.map(v => v/255.0),
-            time,
-            programInfo1,
-            current,
-            index,
-            item.limit,
-            num,
-            currentAngle[1],
-            currentAngle[0]
-          );
-        });
       //  currentAngle = [0.0, 0.0];
         // window.requestAnimationFrame(tick);
         // console.log(currentAngle);
@@ -367,7 +438,7 @@ function main() {
     initEventHandlers(canvas, currentAngle, tick);
 
     console.log(currentAngle);
-    const rafTickFunctionCounterTimes = excutedCountes(tick, 3000);
+    const rafTickFunctionCounterTimes = excutedCountes(tick, 200);
     rafTickFunctionCounterTimes();
     eventStartUp(canvas, tick)
 }
@@ -380,8 +451,8 @@ function eventStartUp(canvas, tick) {
   const rect = canvas.getBoundingClientRect();
   canvas && canvas.addEventListener("mousemove", (e) => {
    
-    ytd.style.left = e.clientX + 'px';
-    ytd.style.top = e.clientY + 'px';
+    // ytd.style.left = e.clientX + 'px';
+    // ytd.style.top = e.clientY + 'px';
     mouseX = e.clientX - rect.left;
     mouseY = e.clientY - rect.top;
     mouseupActived = true;
