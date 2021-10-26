@@ -44,10 +44,12 @@
     out vec4 FragColor;
 
     void main() {
-        
-        vec4 col = u_color;
-        
-        FragColor = col;
+        vec2 uv = v_texcoord;
+        vec2 st = vec2(fract(uv.x * 7.0), fract(uv.y * 23.0));
+        float d1 = step(st.x, 0.9);
+        float d2 = step(0.1, st.y);
+        FragColor.rgb = mix(vec3(0.75), vec3(.9), d1 * d2);
+        FragColor.a = 1.0;
     }
 </script>
 
@@ -112,8 +114,9 @@
 
         vec4 diffuse = u_color * u_diffuse * f_diffuse * fDot;
         vec4 diffuse2 = u_color * u_diffuse * f_diffuse * fDot2;
-        
         FragColor = diffuse + ambient + diffuse2;
+        
+       
     }
 </script>
 
