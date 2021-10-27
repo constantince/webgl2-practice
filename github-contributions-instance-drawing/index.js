@@ -26,6 +26,7 @@ const BASICCOLORS = [
   [15, 233, 168, 255],
   [64, 196, 99, 255],
   [48, 161, 78, 255],
+  [55, 112, 73, 255],
   [33, 110, 57, 255]
 ];
 
@@ -39,7 +40,7 @@ function getNextDay(today) {
   const d = t.getDate();
   return `${y}/${m}/${d}`;
 }
-const CONTRIBUTIONSMAXNUM = 100;
+const CONTRIBUTIONSMAXNUM = 160;
 let contributions = [{date: '2021/01/01', num: 3}];
 const m = new Array(CONTRIBUTIONSMAXNUM - 1).fill(0).reduce((prev,next) => {
   const nextDay = getNextDay(prev);
@@ -85,7 +86,7 @@ function main() {
     const program2 = programPicking.program; // picking program
     var _offset = 1;
 
-    function createContributionBars(item, index, p, time) {
+    function createContributionBars(item, index, p, time, mat) {
       const num = item.num;
       const offset = index % 7;
       if( offset === 0 ) _offset--;
@@ -95,14 +96,16 @@ function main() {
       let color = c.map(v => v/255.0);
       color = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : color;
 
-
       const h = Math.min(time * num / 15 / 1000, num / 10);
       let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
       world = twgl.m4.translate(world, [offsetX, h * .5, offsetY]);
       var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
       rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
-      world = twgl.m4.multiply(rotation, world);
-      const normalMatrix = m4.transpose(m4.inverse(world));
+      twgl.m4.multiply(rotation, world, mat);
+    }
+
+    /*
+            const normalMatrix = m4.transpose(m4.inverse(world));
       const id = index + 1;
       twgl.setUniforms(p, {
         u_world: world,
@@ -115,10 +118,7 @@ function main() {
           ((id >> 24) & 0xFF) / 0xFF,
         ]
       });
-
-      gl.bindVertexArray(cubevao);
-      twgl.drawBufferInfo(gl, cubeBuffInfo);
-    }
+    */
 
     // Create a texture to render to
     const targetTexture = gl.createTexture();
@@ -171,15 +171,7 @@ function main() {
 
     // start make instance data
     const instanceNum = CONTRIBUTIONSMAXNUM;
-    const instanceWorld = new Float32Array(instanceNum * 16);
-    const instanceColor = [];
-
-    // _offset = 1;
-    // load each contribution
    
-
-    
-
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -188,11 +180,13 @@ function main() {
     let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
     view = m4.inverse(view);
 
-    var tick = function(time) {
+    var tick = function(time) { 
+        const instanceWorld = new Float32Array(instanceNum * 16);
+        let instanceColor = [];
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-/*
+
         gl.useProgram(program);
         // make the base mat cube 
         let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
@@ -209,7 +203,6 @@ function main() {
         twgl.drawBufferInfo(gl, planeBufferInfo);
 
 
-*/
         // make the bar that repesent contributions.
         gl.useProgram(program1);
         // const normalMatrix = m4.transpose(m4.inverse(world));
@@ -230,28 +223,11 @@ function main() {
         _offset = 1;
         contributions.forEach((item, index) => {
           let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
-          // twgl.m4.scale(m4.identity(), [.1, .1, .1], mat);
-          // twgl.m4.translate(mat, [index * 2, 0, 0], mat);
-          // twgl.m4.rotateX(mat, toRaius(time * 0.0001), mat);
-          const num = item.num;
-          const offset = index % 7;
-          if( offset === 0 ) _offset--;
-          const offsetX = ((offset * 1) - 3) * 2;
-          const offsetY = ((_offset * 1) + 11) * 2;
-          const c = BASICCOLORS[Math.min(Math.ceil(num / 2), 4)];
+          createContributionBars(item, index, programInfo1, time, mat);
+          const c = BASICCOLORS[Math.min(Math.ceil(item.num / 2), 4)];
           let color = c.map(v => v/255.0);
           color = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : color;
-    
-    
-          const h = Math.min(time * num / 15 / 1000, num / 10);
-          var world = twgl.m4.scale(m4.identity(), [.05, h, .05], mat);
-          world = twgl.m4.translate(mat, [offsetX, h * .5, offsetY], mat);
-          var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
-          rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
-          twgl.m4.multiply(rotation, world, mat);
-          // const normalMatrix = m4.transpose(m4.inverse(world));
-    
-          // createContributionBars(item, index, programInfo1, time);
+          instanceColor.push(...color);
         });
     
         Object.assign(_arrays, {
@@ -259,11 +235,17 @@ function main() {
             numComponents: 16,
             data: instanceWorld,
             divisor: 1
+          },
+          color: {
+            numComponents: 4,
+            data: instanceColor,
+            divisor: 1
           }
+
         });
 
-        const bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
-        const vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
+        let bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+        let vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
         
         // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
         gl.bindVertexArray(vertexArrayInfo);
@@ -272,8 +254,8 @@ function main() {
 
 
 
-        /*
-
+        
+/*
       // render pick frame buffer
       gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -286,14 +268,44 @@ function main() {
       });
 
       _offset = 1;
+      instanceColor = [];
       contributions.forEach((item, index) => {
-        createContributionBars(item, index, programPicking, time);
+        let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
+        createContributionBars(item, index, programPicking, time, mat);
+        const id = index + 1;
+        instanceColor.push(
+          ((id >>  0) & 0xFF) / 0xFF,
+          ((id >>  8) & 0xFF) / 0xFF,
+          ((id >> 16) & 0xFF) / 0xFF,
+          ((id >> 24) & 0xFF) / 0xFF
+        )
+        // console.log(instanceColor);
+        // createContributionBars(item, index, programPicking, time, mat);
       });
+
+      Object.assign(_arrays, {
+        world: {
+          numComponents: 16,
+          data: instanceWorld,
+          divisor: 1
+        },
+        id: {
+          numComponents: 4,
+          data: instanceColor,
+          divisor: 1
+        }
+      });
+
+      bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+      vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programPicking, bufferInfo);
+      // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
+      gl.bindVertexArray(vertexArrayInfo);
+      twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
 
       const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
       const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
       const data = new Uint8Array(4);
-      gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      // gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
       if( data[0] > 0 && contributions[data[0] - 1]) {
           selectedObject = contributions[data[0] - 1];
           ytd.innerHTML = selectedObject.date;
@@ -305,8 +317,8 @@ function main() {
       }
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      */
 
+*/
 }
 
 

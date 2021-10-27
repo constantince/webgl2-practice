@@ -71,6 +71,7 @@
         v_texcoord = a_texcoord;
         v_worldPosition = a_world * a_position;
         v_normal = vec3(u_normalMatrix * a_normal);
+        v_color = a_color;
     }
 </script>
 
@@ -103,7 +104,7 @@
         
         vec4 col = vec4(1.0, 0.0, 1.0, 1.0);
         vec3 worldPosition = v_worldPosition.xyz / v_worldPosition.w;
-        vec4 ambient = u_color * u_ambient * f_ambient;
+        vec4 ambient = v_color * u_ambient * f_ambient;
         
         vec3 normal = normalize(v_normal);
         vec3 lightDirection = normalize(u_lightPosition - worldPosition);
@@ -112,9 +113,9 @@
         vec3 lightDirection2 = normalize(u_lightPosition2 - worldPosition);
         float fDot2 = max(dot(lightDirection2, normal), 0.0);
 
-        vec4 diffuse = u_color * u_diffuse * f_diffuse * fDot;
-        vec4 diffuse2 = u_color * u_diffuse * f_diffuse * fDot2;
-        FragColor = u_color;
+        vec4 diffuse = v_color * u_diffuse * f_diffuse * fDot;
+        vec4 diffuse2 = v_color * u_diffuse * f_diffuse * fDot2;
+        FragColor = diffuse + diffuse2 + ambient;
         
        
     }
@@ -125,18 +126,22 @@
     layout(location = 0) in vec4 a_position;
     uniform mat4 u_projection;
     uniform mat4 u_view;
-    uniform mat4 u_world;
+    in mat4 a_world;
+    in vec4 a_id;
+    out vec4 v_id;
     void main() {
-        gl_Position = u_projection * u_view * u_world * a_position;
+        gl_Position = u_projection * u_view * a_world * a_position;
+        v_id = a_id;
     }
 </script>
 
 <script type="x-shader/x-fragment" id="frag-picking">#version 300 es
     precision mediump float;
     uniform vec4 u_id;
+    in vec4 v_id;
     out vec4 outColor;
     void main() {
-        outColor = u_id;
+        outColor = v_id;
     }
 </script>
 
