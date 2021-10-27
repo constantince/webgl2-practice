@@ -40,7 +40,7 @@ function getNextDay(today) {
   return `${y}/${m}/${d}`;
 }
 let contributions = [{date: '2021/01/01', num: 3}];
-const m = new Array(160).fill(0).reduce((prev,next) => {
+const m = new Array(9).fill(0).reduce((prev,next) => {
   const nextDay = getNextDay(prev);
   contributions.push({
     date: nextDay,
@@ -144,6 +144,8 @@ function main() {
     const planeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
     const planevao = twgl.createVAOFromBufferInfo(gl, programInfo, planeBufferInfo);
 
+    const _arrays = twgl.primitives.createCubeVertices();
+
     function setFramebufferAttachmentSizes(width, height) {
       gl.bindTexture(gl.TEXTURE_2D, targetTexture);
       // define size and format of level 0
@@ -163,6 +165,12 @@ function main() {
 
     setFramebufferAttachmentSizes(OFFSCREEN_WIDTH, OFFSCREEN_HEIGH);
     
+
+    // start make instance data
+    const instanceNum = 10;
+    const instanceWorld = new Float32Array(instanceNum * 16);
+    const instanceColor = [];
+
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -171,12 +179,12 @@ function main() {
     let view = m4.lookAt([1, 2, 2], [0, 0, 0], [0, 1, 0]);
     view = m4.inverse(view);
 
-
     var tick = function(time) {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.useProgram(program);
 
+/*
+        gl.useProgram(program);
         // make the base mat cube 
         let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
         world = twgl.m4.translate(world, [0, -.8, 0]);
@@ -192,14 +200,14 @@ function main() {
         twgl.drawBufferInfo(gl, planeBufferInfo);
 
 
-        
+*/
         // make the bar that repesent contributions.
         gl.useProgram(program1);
-        const normalMatrix = m4.transpose(m4.inverse(world));
+        // const normalMatrix = m4.transpose(m4.inverse(world));
         twgl.setUniforms(programInfo1, {
           u_projection: projection,
           u_view: view,
-          u_world: world,
+          u_world: m4.identity(),
           u_color: [.9, .9, .9, 1.0],
           u_ambient: AMBIENTCOLOR,
           f_ambient: F_AMBIENTCOLOR,
@@ -207,18 +215,44 @@ function main() {
           f_diffuse: F_DIFFUSECOLOR,
           u_lightPosition: LIGHTSOURCE,
           u_lightPosition2: LIGHTSOURCE2,
-          u_normalMatrix: normalMatrix,
+          u_normalMatrix: m4.identity(),
         });
         
         
         _offset = 1;
         // load each contribution
         contributions.forEach((item, index) => {
-          createContributionBars(item, index, programInfo1, time);
+          const mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
+          twgl.m4.translate(m4.identity(), [index * 1, .5, 2], mat);
+          // const h = Math.min(time * 10 / 15 / 1000, 10 / 10);
+          // let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
+          // world = twgl.m4.translate(world, [1, h * .5, 2]);
+          // let rotation = world = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+          // rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+          // m4.multiply(rotation, world, mat);
+          // instanceColors.push(1, 0, 0);
+          // twgl.m4.multiply(mat, world);
+
+          // createContributionBars(item, index, programInfo1, time);
         });
 
+        Object.assign(_arrays, {
+          world: {
+            numComponents: 16,
+            data: instanceWorld,
+            divisor: 1
+          }
+        });
+
+        const bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+        const vertexArrayInfo = twgl.createVertexArrayInfo(gl, programInfo1, bufferInfo);
+        twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
+        twgl.drawBufferInfo(gl, vertexArrayInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
 
 
+
+
+        /*
 
       // render pick frame buffer
       gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
@@ -251,6 +285,8 @@ function main() {
       }
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      */
+
 }
 
 
@@ -258,7 +294,7 @@ function main() {
     initEventHandlers(canvas, currentAngle, tick);
 
     // make a animation that last for 2 seconds.
-    const rafTickFunctionCounterTimes = excutedCountes(tick, 2000);
+    const rafTickFunctionCounterTimes = excutedCountes(tick, 21000);
     rafTickFunctionCounterTimes();
 }
 

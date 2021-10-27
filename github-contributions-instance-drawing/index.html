@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css" />
+    <title>Chen Yan's Github Contributions</title>
+</head>
+<body onload="main()">
+    <canvas id="happy-life-happy-code" width="500" height="500"></canvas>
+    <div class="ytd">2021/01/01</div>
+</body>
+<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
+<script src="../core/gl-matrix.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
+    in vec2 a_texcoord;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    out vec4 v_color;
+    out vec2 v_texcoord;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+        v_texcoord = a_texcoord;
+        v_color = a_color;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform sampler2D u_texture;
+    uniform float has_texture;
+    uniform vec4 u_color;
+    in vec2 v_texcoord;
+    out vec4 FragColor;
+
+    void main() {
+        vec2 uv = v_texcoord;
+        vec2 st = vec2(fract(uv.x * 7.0), fract(uv.y * 23.0));
+        float d1 = step(st.x, 0.9);
+        float d2 = step(0.1, st.y);
+        FragColor.rgb = mix(vec3(1.0), vec3(.8), d1 * d2);
+        FragColor.a = 1.0;
+    }
+</script>
+
+<script type="x-shader/x-vertex" id="vertex1">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    in vec4 a_color;
+    in vec2 a_texcoord;
+    in vec4 a_normal;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    in mat4 a_world;
+    uniform mat4 u_normalMatrix;
+    out vec4 v_color;
+    out vec2 v_texcoord;
+    out vec3 v_normal;
+    out vec4 v_worldPosition;
+    void main() {
+        gl_Position = u_projection * u_view * a_world * a_position;
+        v_texcoord = a_texcoord;
+        v_worldPosition = a_world * a_position;
+        v_normal = vec3(u_normalMatrix * a_normal);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="frag1">#version 300 es
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform vec4 u_color;
+
+
+    uniform vec4 u_ambient;
+    uniform float f_ambient;
+
+    uniform vec4 u_diffuse;
+    uniform float f_diffuse;
+
+    uniform vec3 u_lightPosition;
+    uniform vec3 u_lightPosition2;
+
+
+    in vec4 v_color;
+    in vec2 v_texcoord;
+    in vec4 v_worldPosition;
+    in vec3 v_normal;
+
+    out vec4 FragColor;
+
+    void main() {
+        
+        vec4 col = vec4(1.0, 0.0, 1.0, 1.0);
+        vec3 worldPosition = v_worldPosition.xyz / v_worldPosition.w;
+        vec4 ambient = u_color * u_ambient * f_ambient;
+        
+        vec3 normal = normalize(v_normal);
+        vec3 lightDirection = normalize(u_lightPosition - worldPosition);
+        float fDot = max(dot(lightDirection, normal), 0.0);
+
+        vec3 lightDirection2 = normalize(u_lightPosition2 - worldPosition);
+        float fDot2 = max(dot(lightDirection2, normal), 0.0);
+
+        vec4 diffuse = u_color * u_diffuse * f_diffuse * fDot;
+        vec4 diffuse2 = u_color * u_diffuse * f_diffuse * fDot2;
+        FragColor = u_color;
+        
+       
+    }
+</script>
+
+
+<script type="x-shader/x-vertex" id="vertex-picking">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="frag-picking">#version 300 es
+    precision mediump float;
+    uniform vec4 u_id;
+    out vec4 outColor;
+    void main() {
+        outColor = u_id;
+    }
+</script>
+
+<script type="text/javascript" src="./index.js"></script>
+</html>
