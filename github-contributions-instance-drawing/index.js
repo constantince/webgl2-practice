@@ -1,20 +1,20 @@
 function getSourceFromScript(scriptId) {
-    const shaderScript = document.getElementById(scriptId);
-    if (!shaderScript) {
-      throw ("*** Error: unknown script element" + scriptId);
-    } 
-    const text = shaderScript.text;
-    return text;
+  const shaderScript = document.getElementById(scriptId);
+  if (!shaderScript) {
+    throw ("*** Error: unknown script element" + scriptId);
   }
-  
-function createShaderFromScript(gl, scriptIds) {
-    let shaders = [getSourceFromScript(scriptIds[0]), getSourceFromScript(scriptIds[1])];
-    if(shaders.length <= 1) {
-        console.warn("shaders text error", shaders);
-    }
-    const program = twgl.createProgramInfo(gl, shaders);
+  const text = shaderScript.text;
+  return text;
+}
 
-    return program;
+function createShaderFromScript(gl, scriptIds) {
+  let shaders = [getSourceFromScript(scriptIds[0]), getSourceFromScript(scriptIds[1])];
+  if (shaders.length <= 1) {
+    console.warn("shaders text error", shaders);
+  }
+  const program = twgl.createProgramInfo(gl, shaders);
+
+  return program;
 }
 
 function toRaius(a) {
@@ -45,15 +45,15 @@ function getNextDay(today) {
 // data initialization
 const CONTRIBUTIONSMAXNUM = 160;
 const c0 = d3.lab((10 - 3) * 15, -34.9638, 47.7721).rgb();
-let contributions = [{date: '2021/01/01', num: 3, color: [c0.r/255, c0.g/255, c0.b/255, c0.opacity]}];
-const m = new Array(CONTRIBUTIONSMAXNUM - 1).fill(0).reduce((prev,next) => {
+let contributions = [{ date: '2021/01/01', num: 3, color: [c0.r / 255, c0.g / 255, c0.b / 255, c0.opacity] }];
+const m = new Array(CONTRIBUTIONSMAXNUM - 1).fill(0).reduce((prev, next) => {
   const nextDay = getNextDay(prev);
   const num = Math.floor(Math.random() * 10);
   const c = d3.lab((10 - num) * 15, -34.9638, 47.7721).rgb();
   contributions.push({
     date: nextDay,
     num,
-    color: [c.r/255, c.g/255, c.b/255, c.opacity]
+    color: [c.r / 255, c.g / 255, c.b / 255, c.opacity]
   });
   return nextDay;
 }, contributions[0].date);
@@ -83,254 +83,254 @@ var mouseUped = true;
 var clock = createClock();
 var spanBox = document.getElementById("date-selected");
 function main() {
-  
-    const canvas = document.getElementById("happy-life-happy-code");
-    const gl = canvas.getContext("webgl2") ||
-      canvas.getContext("webgl") ||
-      canvas.getContext("experimental-webgl");
 
-    if( !gl ) return console.error("sorry, your browser does't not support webgl now!");
-    twgl.setAttributePrefix("a_");
-    const programInfo = createShaderFromScript(gl, ["vertex", "frag"]);
-    const programInfo1 = createShaderFromScript(gl, ["vertex1", "frag1"]);
-    const programPicking = createShaderFromScript(gl, ["vertex-picking", "frag-picking"]);
-    const program = programInfo.program; // basic program
-    const program1 = programInfo1.program; // bar program
-    const program2 = programPicking.program; // picking program
-    var _offset = 1;
+  const canvas = document.getElementById("happy-life-happy-code");
+  const gl = canvas.getContext("webgl2") ||
+    canvas.getContext("webgl") ||
+    canvas.getContext("experimental-webgl");
 
-    function createContributionBarsMatrix(item, index, time, mat) {
-      const num = item.num;
-      const offset = index % 7;
-      if( offset === 0 ) _offset--;
-      const offsetX = ((offset * 1) - 3) * 2;
-      const offsetY = ((_offset * 1) + 11) * 2;
-      const h = Math.min(time * num / 15 / 1000, num / 10);
-      let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
-      world = twgl.m4.translate(world, [offsetX, h * .5, offsetY]);
-      var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
-      rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
-      twgl.m4.multiply(rotation, world, mat);
-    }
+  if (!gl) return console.error("sorry, your browser does't not support webgl now!");
+  twgl.setAttributePrefix("a_");
+  const programInfo = createShaderFromScript(gl, ["vertex", "frag"]);
+  const programInfo1 = createShaderFromScript(gl, ["vertex1", "frag1"]);
+  const programPicking = createShaderFromScript(gl, ["vertex-picking", "frag-picking"]);
+  const program = programInfo.program; // basic program
+  const program1 = programInfo1.program; // bar program
+  const program2 = programPicking.program; // picking program
+  var _offset = 1;
 
-    // Create a texture to render to
-    const targetTexture = gl.createTexture();
+  function createContributionBarsMatrix(item, index, time, mat) {
+    const num = item.num;
+    const offset = index % 7;
+    if (offset === 0) _offset--;
+    const offsetX = ((offset * 1) - 3) * 2;
+    const offsetY = ((_offset * 1) + 11) * 2;
+    const h = Math.min(time * num / 15 / 1000, num / 10);
+    let world = twgl.m4.scale(m4.identity(), [.05, h, .05]);
+    world = twgl.m4.translate(world, [offsetX, h * .5, offsetY]);
+    var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+    rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+    twgl.m4.multiply(rotation, world, mat);
+  }
+
+  // Create a texture to render to
+  const targetTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  // create a depth renderbuffer
+  const depthBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+
+  const pickFbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  const level = 0;
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+  // make a depth buffer and the same size as the targetTexture
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
+  const cubeBuffInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
+  const cubevao = twgl.createVAOFromBufferInfo(gl, programInfo1, cubeBuffInfo);
+
+  const planeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
+  const planevao = twgl.createVAOFromBufferInfo(gl, programInfo, planeBufferInfo);
+
+  const _arrays = twgl.primitives.createCubeVertices();
+
+  function setFramebufferAttachmentSizes(width, height) {
     gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    // create a depth renderbuffer
-    const depthBuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
-
-    const pickFbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
-
-    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    // define size and format of level 0
     const level = 0;
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+    const internalFormat = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+      width, height, border,
+      format, type, data);
 
-    // make a depth buffer and the same size as the targetTexture
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+  }
 
-    const cubeBuffInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
-    const cubevao = twgl.createVAOFromBufferInfo(gl, programInfo1, cubeBuffInfo);
+  setFramebufferAttachmentSizes(OFFSCREEN_WIDTH, OFFSCREEN_HEIGH);
 
-    const planeBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1);
-    const planevao = twgl.createVAOFromBufferInfo(gl, programInfo, planeBufferInfo);
 
-    const _arrays = twgl.primitives.createCubeVertices();
+  // start make instance data
+  const instanceNum = CONTRIBUTIONSMAXNUM;
 
-    function setFramebufferAttachmentSizes(width, height) {
-      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-      // define size and format of level 0
-      const level = 0;
-      const internalFormat = gl.RGBA;
-      const border = 0;
-      const format = gl.RGBA;
-      const type = gl.UNSIGNED_BYTE;
-      const data = null;
-      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-                    width, height, border,
-                    format, type, data);
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  var currentAngle = [0.0, 0.0];
+  const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
 
-      gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+
+  var tick = function (time) {
+    const instanceWorld = new Float32Array(instanceNum * 16);
+    const instanceNormalWorld = new Float32Array(instanceNum * 16);
+    let instanceColor = [];
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(program);
+
+
+    let view = m4.lookAt([1, 2, 2 + whellZoomSize], [0, 0, 0], [0, 1, 0]);
+    view = m4.inverse(view);
+
+    // make the base mat cube 
+    let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
+    world = twgl.m4.translate(world, [0, -.8, 0]);
+    var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
+    rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
+    world = twgl.m4.multiply(rotation, world);
+    twgl.setUniforms(programInfo, {
+      u_projection: projection,
+      u_view: view,
+      u_world: world
+    });
+    gl.bindVertexArray(planevao);
+    twgl.drawBufferInfo(gl, planeBufferInfo);
+
+
+
+
+
+
+    // make the bar that repesent contributions.
+    gl.useProgram(program1);
+    // const normalMatrix = m4.transpose(m4.inverse(world));
+    twgl.setUniforms(programInfo1, {
+      u_projection: projection,
+      u_view: view,
+      u_world: m4.identity(),
+      u_color: [.9, .0, .0, 1.0],
+      u_ambient: AMBIENTCOLOR,
+      f_ambient: F_AMBIENTCOLOR,
+      u_diffuse: DIFFUSECOLOR,
+      f_diffuse: F_DIFFUSECOLOR,
+      u_lightPosition: LIGHTSOURCE,
+      // u_normalMatrix: m4.identity()
+    });
+
+    _offset = 1;
+    contributions.forEach((item, index) => {
+      let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
+      let nmat = new Float32Array(instanceNormalWorld.buffer, index * 16 * 4, 16);
+      createContributionBarsMatrix(item, index, time, mat);
+      m4.transpose(m4.inverse(mat), nmat);
+      let color = item.date === selectedObject.date ? BARSELECTEDCOLOR : item.color;
+      // console.log(color);
+      instanceColor.push(...color);
+    });
+
+    Object.assign(_arrays, {
+      world: {
+        numComponents: 16,
+        data: instanceWorld,
+        divisor: 1
+      },
+      color: {
+        numComponents: 4,
+        data: instanceColor,
+        divisor: 1
+      },
+      normalMatrix: {
+        numComponents: 16,
+        data: instanceNormalWorld,
+        divisor: 1
+      }
+
+    });
+
+    bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+    vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
+
+    // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
+    gl.bindVertexArray(vertexArrayInfo);
+    twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
+
+
+    // render pick frame buffer
+    if (mouseUped === true) {
+      // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(program2);
+      twgl.setUniforms(programPicking, {
+        u_projection: projection,
+        u_view: view,
+        u_world: m4.identity(),
+      });
+
+      _offset = 1;
+      instanceColor = [];
+      contributions.forEach((item, index) => {
+        let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
+        createContributionBarsMatrix(item, index, time, mat);
+        const id = index + 1;
+        instanceColor.push(
+          ((id >> 0) & 0xFF) / 0xFF,
+          ((id >> 8) & 0xFF) / 0xFF,
+          ((id >> 16) & 0xFF) / 0xFF,
+          ((id >> 24) & 0xFF) / 0xFF
+        )
+        // console.log(instanceColor);
+        // createContributionBarsMatrixMatrix(item, index, programPicking, time, mat);
+      });
+
+      Object.assign(_arrays, {
+        world: {
+          numComponents: 16,
+          data: instanceWorld,
+          divisor: 1
+        },
+        id: {
+          numComponents: 4,
+          data: instanceColor,
+          divisor: 1
+        }
+      });
+
+      let bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+      let vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programPicking, bufferInfo);
+      // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
+      gl.bindVertexArray(vertexArrayInfo);
+      twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
+
+      const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
+      const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
+      const data = new Uint8Array(4);
+      gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      if (data[0] > 0 && contributions[data[0] - 1]) {
+        selectedObject = contributions[data[0] - 1];
+        spanBox.innerText = 'On ' + selectedObject.date + ' commited: ' + selectedObject.num + ' times';
+      } else {
+        //  selectedObject = {};
+      }
+      //  console.log(selectedObject);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      mouseUped = false;
+      window.requestAnimationFrame(tick);
     }
 
-    setFramebufferAttachmentSizes(OFFSCREEN_WIDTH, OFFSCREEN_HEIGH);
-    
-
-    // start make instance data
-    const instanceNum = CONTRIBUTIONSMAXNUM;
-   
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
-    var currentAngle = [0.0, 0.0];
-    const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
-   
-
-    var tick = function(time) { 
-        const instanceWorld = new Float32Array(instanceNum * 16);
-        const instanceNormalWorld = new Float32Array(instanceNum * 16);
-        let instanceColor = [];
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.useProgram(program);
+    clock(gl);
+  }
 
 
-        let view = m4.lookAt([1, 2, 2 + whellZoomSize], [0, 0, 0], [0, 1, 0]);
-        view = m4.inverse(view);
+  // start to listen canvas mouse event.   
+  initEventHandlers(canvas, currentAngle, tick);
 
-        // make the base mat cube 
-        let world = twgl.m4.scale(m4.identity(), [0.7, .1, 2.3]);
-        world = twgl.m4.translate(world, [0, -.8, 0]);
-        var rotation = twgl.m4.rotateY(m4.identity(), toRaius(currentAngle[1]));
-        rotation = twgl.m4.rotateX(rotation, toRaius(currentAngle[0]));
-        world = twgl.m4.multiply(rotation, world);
-        twgl.setUniforms(programInfo, {
-          u_projection: projection,
-          u_view: view,
-          u_world: world
-        });
-        gl.bindVertexArray(planevao);
-        twgl.drawBufferInfo(gl, planeBufferInfo);
-       
-        
-       
-       
-
-
-        // make the bar that repesent contributions.
-        gl.useProgram(program1);
-        // const normalMatrix = m4.transpose(m4.inverse(world));
-        twgl.setUniforms(programInfo1, {
-          u_projection: projection,
-          u_view: view,
-          u_world: m4.identity(),
-          u_color: [.9, .0, .0, 1.0],
-          u_ambient: AMBIENTCOLOR,
-          f_ambient: F_AMBIENTCOLOR,
-          u_diffuse: DIFFUSECOLOR,
-          f_diffuse: F_DIFFUSECOLOR,
-          u_lightPosition: LIGHTSOURCE,
-          // u_normalMatrix: m4.identity()
-        });
-        
-        _offset = 1;
-        contributions.forEach((item, index) => {
-          let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
-          let nmat = new Float32Array(instanceNormalWorld.buffer, index * 16 * 4, 16);
-          createContributionBarsMatrix(item, index, time, mat);
-          m4.transpose(m4.inverse(mat), nmat);
-          let color = item.date === selectedObject.date ? BARSELECTEDCOLOR : item.color;
-          // console.log(color);
-          instanceColor.push(...color);
-        });
-    
-        Object.assign(_arrays, {
-          world: {
-            numComponents: 16,
-            data: instanceWorld,
-            divisor: 1
-          },
-          color: {
-            numComponents: 4,
-            data: instanceColor,
-            divisor: 1
-          },
-          normalMatrix: {
-            numComponents: 16,
-            data: instanceNormalWorld,
-            divisor: 1
-          }
-
-        });
-
-        bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
-        vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
-        
-        // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
-        gl.bindVertexArray(vertexArrayInfo);
-        twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
-
-      
-         // render pick frame buffer
-         if( mouseUped === true) {
-          // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-         gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
-         gl.viewport(0, 0, canvas.width, canvas.height);
-         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-         gl.useProgram(program2);
-         twgl.setUniforms(programPicking, {
-           u_projection: projection,
-           u_view: view,
-           u_world: m4.identity(),
-         });
-   
-         _offset = 1;
-         instanceColor = [];
-         contributions.forEach((item, index) => {
-           let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
-           createContributionBarsMatrix(item, index, time, mat);
-           const id = index + 1;
-           instanceColor.push(
-             ((id >>  0) & 0xFF) / 0xFF,
-             ((id >>  8) & 0xFF) / 0xFF,
-             ((id >> 16) & 0xFF) / 0xFF,
-             ((id >> 24) & 0xFF) / 0xFF
-           )
-           // console.log(instanceColor);
-           // createContributionBarsMatrixMatrix(item, index, programPicking, time, mat);
-         });
-   
-         Object.assign(_arrays, {
-           world: {
-             numComponents: 16,
-             data: instanceWorld,
-             divisor: 1
-           },
-           id: {
-             numComponents: 4,
-             data: instanceColor,
-             divisor: 1
-           }
-         });
-   
-         let bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
-         let vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programPicking, bufferInfo);
-         // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
-         gl.bindVertexArray(vertexArrayInfo);
-         twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
-   
-         const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
-         const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
-         const data = new Uint8Array(4);
-         gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-         if( data[0] > 0 && contributions[data[0] - 1]) {
-             selectedObject = contributions[data[0] - 1];
-             spanBox.innerText = 'On ' + selectedObject.date + ' commited: ' + selectedObject.num + ' times';
-            } else {
-            //  selectedObject = {};
-         }
-        //  console.log(selectedObject);
-         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-         mouseUped = false;
-         window.requestAnimationFrame(tick);
-        } 
-      
-        clock(gl);
-}
-
-
-    // start to listen canvas mouse event.   
-    initEventHandlers(canvas, currentAngle, tick);
-
-    // make a animation that last for 2 seconds.
-    const rafTickFunctionCounterTimes = excutedCountes(tick, 1500);
-    rafTickFunctionCounterTimes();
+  // make a animation that last for 2 seconds.
+  const rafTickFunctionCounterTimes = excutedCountes(tick, 1500);
+  rafTickFunctionCounterTimes();
 }
 
 // create the container of bar infomations.
@@ -349,12 +349,12 @@ function makeCover() {
 
 // exctue the animation for N seconds
 function excutedCountes(func, sec) {
-  var raf; var start;var cover;
+  var raf; var start; var cover;
 
-  function Counters (time) {
+  function Counters(time) {
     func(time);
     // console.log(Date.now() - start);
-    if( Date.now() - start >= sec) {
+    if (Date.now() - start >= sec) {
       window.cancelAnimationFrame(raf);
       cover.style.display = "none";
     } else {
@@ -377,22 +377,22 @@ function initEventHandlers(canvas, currentAngle, tick) {
   var rect = canvas.getBoundingClientRect();
 
   canvas.addEventListener("wheel", (ev) => {
-        let eventDelta = ev.wheelDelta || -ev.deltaY + 40;// 火狐和其他浏览器都兼容
-        let zoomSize = eventDelta / 120; // 如果是正数向上,复数向下
-        whellZoomSize -= zoomSize * 0.1;
-        window.requestAnimationFrame(tick);
+    let eventDelta = ev.wheelDelta || -ev.deltaY + 40;// 火狐和其他浏览器都兼容
+    let zoomSize = eventDelta / 120; // 如果是正数向上,复数向下
+    whellZoomSize -= zoomSize * 0.1;
+    window.requestAnimationFrame(tick);
   });
 
   canvas.onmousedown = function (ev) {
     var x = ev.clientX, y = ev.clientY;
-    if( rect.left <= x && x < rect.right && rect.top <=y && y < rect.bottom) {
+    if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
       lastX = x; lastY = y;
       dragging = true;
-     
+
     }
   }
 
-  canvas.onmouseup = function(ev) {
+  canvas.onmouseup = function (ev) {
     dragging = false;
     mouseX = ev.clientX - rect.left;
     mouseY = ev.clientY - rect.top;
@@ -400,18 +400,18 @@ function initEventHandlers(canvas, currentAngle, tick) {
     window.requestAnimationFrame(tick);
   }
 
-  canvas.onmousemove = function(ev) {
-      var x = ev.clientX, y = ev.clientY;
+  canvas.onmousemove = function (ev) {
+    var x = ev.clientX, y = ev.clientY;
 
-      if( dragging ) {
-        var factor = .05 / canvas.height;
-        var dx = factor * (x - lastX);
-        var dy = factor * (y - lastY);
-        currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
-        currentAngle[1] = currentAngle[1] + dx;
-        window.requestAnimationFrame(tick);
-      }  
-      lastX = x, lastY =y;
+    if (dragging) {
+      var factor = .05 / canvas.height;
+      var dx = factor * (x - lastX);
+      var dy = factor * (y - lastY);
+      currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+      currentAngle[1] = currentAngle[1] + dx;
+      window.requestAnimationFrame(tick);
+    }
+    lastX = x, lastY = y;
   }
 }
 
@@ -420,19 +420,19 @@ function initEventHandlers(canvas, currentAngle, tick) {
 function createClock() {
   var now = null, counts = 0;
   var fps = document.getElementById("fps");
-  return  function(gl) {
-      gl.finish();
-      counts++;
-      var _now = Date.now();
-      if(_now - now >= 1000) {
-        now = _now;
-        var n = counts;
-        counts = 0;
-        // console.log(n,' FPS');
-        fps.innerText = 'GPU: ' + n + ' fps';
-        return n;// return FPS counts
-      }
+  return function (gl) {
+    gl.finish();
+    counts++;
+    var _now = Date.now();
+    if (_now - now >= 1000) {
+      now = _now;
+      var n = counts;
+      counts = 0;
+      // console.log(n,' FPS');
+      fps.innerText = 'GPU: ' + n + ' fps';
+      return n;// return FPS counts
     }
+  }
 }
 
 
