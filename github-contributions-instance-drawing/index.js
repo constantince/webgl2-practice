@@ -43,7 +43,7 @@ function getNextDay(today) {
   return `${y}/${m}/${d}`;
 }
 // data initialization
-const CONTRIBUTIONSMAXNUM = 161;
+const CONTRIBUTIONSMAXNUM = 160;
 const c0 = d3.lab((10 - 3) * 15, -34.9638, 47.7721).rgb();
 let contributions = [{date: '2021/01/01', num: 3, color: [c0.r/255, c0.g/255, c0.b/255, c0.opacity]}];
 const m = new Array(CONTRIBUTIONSMAXNUM - 1).fill(0).reduce((prev,next) => {
@@ -67,6 +67,7 @@ const LIGHTSOURCE = [2, 4, 5];
 const LIGHTSOURCE2 = [-2, 4, -5];
 const OFFSCREEN_WIDTH = 2040;
 const OFFSCREEN_HEIGH = 2040;
+const BARSELECTEDCOLOR = [1.0, 0.0, 0.0, 1.0];
 // mouse position
 var mouseX = 0;
 var mouseY = 0;
@@ -76,10 +77,13 @@ var ytd = document.querySelector(".ytd");
 var selectedObject = {};
 // wheel action
 var whellZoomSize = 0;
+// mouse action
+var mouseUped = true;
 
-
-
+var clock = createClock();
+var spanBox = document.getElementById("date-selected");
 function main() {
+  
     const canvas = document.getElementById("happy-life-happy-code");
     const gl = canvas.getContext("webgl2") ||
       canvas.getContext("webgl") ||
@@ -120,8 +124,8 @@ function main() {
     const depthBuffer = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
 
-    //const pickFbo = gl.createFramebuffer();
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+    const pickFbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
 
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
     const level = 0;
@@ -163,7 +167,7 @@ function main() {
    
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     var currentAngle = [0.0, 0.0];
     const projection = m4.perspective(fieldView, canvas.width / canvas.height, 1, 1000);
    
@@ -174,8 +178,6 @@ function main() {
         let instanceColor = [];
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-
         gl.useProgram(program);
 
 
@@ -195,6 +197,10 @@ function main() {
         });
         gl.bindVertexArray(planevao);
         twgl.drawBufferInfo(gl, planeBufferInfo);
+       
+        
+       
+       
 
 
         // make the bar that repesent contributions.
@@ -219,7 +225,8 @@ function main() {
           let nmat = new Float32Array(instanceNormalWorld.buffer, index * 16 * 4, 16);
           createContributionBarsMatrix(item, index, time, mat);
           m4.transpose(m4.inverse(mat), nmat);
-          let color = item.date === selectedObject.date ? [1.0, 1.0, 0.0, 1.0] : item.color;
+          let color = item.date === selectedObject.date ? BARSELECTEDCOLOR : item.color;
+          // console.log(color);
           instanceColor.push(...color);
         });
     
@@ -242,81 +249,79 @@ function main() {
 
         });
 
-        let bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
-        let vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
+        bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+        vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programInfo1, bufferInfo);
         
         // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
         gl.bindVertexArray(vertexArrayInfo);
         twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
 
-
-
-
-        
-/*
-      // render pick frame buffer
-      gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.useProgram(program2);
-      twgl.setUniforms(programPicking, {
-        u_projection: projection,
-        u_view: view,
-        u_world: m4.identity(),
-      });
-
-      _offset = 1;
-      instanceColor = [];
-      contributions.forEach((item, index) => {
-        let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
-        createContributionBarsMatrix(item, index, programPicking, time, mat);
-        const id = index + 1;
-        instanceColor.push(
-          ((id >>  0) & 0xFF) / 0xFF,
-          ((id >>  8) & 0xFF) / 0xFF,
-          ((id >> 16) & 0xFF) / 0xFF,
-          ((id >> 24) & 0xFF) / 0xFF
-        )
-        // console.log(instanceColor);
-        // createContributionBarsMatrixMatrix(item, index, programPicking, time, mat);
-      });
-
-      Object.assign(_arrays, {
-        world: {
-          numComponents: 16,
-          data: instanceWorld,
-          divisor: 1
-        },
-        id: {
-          numComponents: 4,
-          data: instanceColor,
-          divisor: 1
-        }
-      });
-
-      bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
-      vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programPicking, bufferInfo);
-      // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
-      gl.bindVertexArray(vertexArrayInfo);
-      twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
-
-      const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
-      const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
-      const data = new Uint8Array(4);
-      // gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-      if( data[0] > 0 && contributions[data[0] - 1]) {
-          selectedObject = contributions[data[0] - 1];
-          ytd.innerHTML = selectedObject.date;
-          ytd.style.display = "block";
-          
-      } else {
-          ytd.style.display = "none";
-          selectedObject = {};
-      }
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-*/
+      
+         // render pick frame buffer
+         if( mouseUped === true) {
+          // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+         gl.bindFramebuffer(gl.FRAMEBUFFER, pickFbo);
+         gl.viewport(0, 0, canvas.width, canvas.height);
+         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+         gl.useProgram(program2);
+         twgl.setUniforms(programPicking, {
+           u_projection: projection,
+           u_view: view,
+           u_world: m4.identity(),
+         });
+   
+         _offset = 1;
+         instanceColor = [];
+         contributions.forEach((item, index) => {
+           let mat = new Float32Array(instanceWorld.buffer, index * 16 * 4, 16);
+           createContributionBarsMatrix(item, index, time, mat);
+           const id = index + 1;
+           instanceColor.push(
+             ((id >>  0) & 0xFF) / 0xFF,
+             ((id >>  8) & 0xFF) / 0xFF,
+             ((id >> 16) & 0xFF) / 0xFF,
+             ((id >> 24) & 0xFF) / 0xFF
+           )
+           // console.log(instanceColor);
+           // createContributionBarsMatrixMatrix(item, index, programPicking, time, mat);
+         });
+   
+         Object.assign(_arrays, {
+           world: {
+             numComponents: 16,
+             data: instanceWorld,
+             divisor: 1
+           },
+           id: {
+             numComponents: 4,
+             data: instanceColor,
+             divisor: 1
+           }
+         });
+   
+         let bufferInfo = twgl.createBufferInfoFromArrays(gl, _arrays);
+         let vertexArrayInfo = twgl.createVAOFromBufferInfo(gl, programPicking, bufferInfo);
+         // twgl.setBuffersAndAttributes(gl, programInfo1, vertexArrayInfo);
+         gl.bindVertexArray(vertexArrayInfo);
+         twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLES, vertexArrayInfo.numElements, 0, instanceNum);
+   
+         const pixelX = mouseX * gl.canvas.width / gl.canvas.clientWidth;
+         const pixelY = gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1;
+         const data = new Uint8Array(4);
+         gl.readPixels(pixelX, pixelY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+         if( data[0] > 0 && contributions[data[0] - 1]) {
+             selectedObject = contributions[data[0] - 1];
+             spanBox.innerText = 'On ' + selectedObject.date + ' commited: ' + selectedObject.num + ' times';
+            } else {
+            //  selectedObject = {};
+         }
+        //  console.log(selectedObject);
+         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+         mouseUped = false;
+         window.requestAnimationFrame(tick);
+        } 
+      
+        clock(gl);
 }
 
 
@@ -383,11 +388,16 @@ function initEventHandlers(canvas, currentAngle, tick) {
     if( rect.left <= x && x < rect.right && rect.top <=y && y < rect.bottom) {
       lastX = x; lastY = y;
       dragging = true;
+     
     }
   }
 
   canvas.onmouseup = function(ev) {
     dragging = false;
+    mouseX = ev.clientX - rect.left;
+    mouseY = ev.clientY - rect.top;
+    mouseUped = true;
+    window.requestAnimationFrame(tick);
   }
 
   canvas.onmousemove = function(ev) {
@@ -399,14 +409,30 @@ function initEventHandlers(canvas, currentAngle, tick) {
         var dy = factor * (y - lastY);
         currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
         currentAngle[1] = currentAngle[1] + dx;
-      }
-      ytd.style.left = ev.clientX + 'px';
-      ytd.style.top = ev.clientY + 'px';
-      mouseX = ev.clientX - rect.left;
-      mouseY = ev.clientY - rect.top;
-      window.requestAnimationFrame(tick);
+        window.requestAnimationFrame(tick);
+      }  
       lastX = x, lastY =y;
   }
+}
+
+
+
+function createClock() {
+  var now = null, counts = 0;
+  var fps = document.getElementById("fps");
+  return  function(gl) {
+      gl.finish();
+      counts++;
+      var _now = Date.now();
+      if(_now - now >= 1000) {
+        now = _now;
+        var n = counts;
+        counts = 0;
+        // console.log(n,' FPS');
+        fps.innerText = 'GPU: ' + n + ' fps';
+        return n;// return FPS counts
+      }
+    }
 }
 
 
