@@ -14,6 +14,18 @@ html {
     
   }
 
+  #selected {
+    font-size: 20px;
+  }
+
+  .date-cls {
+    color: green;
+  }
+  .times-cls {
+    color: red;
+    font-weight: bold;
+  }
+
   body .ytd {
     position: absolute;
     width: 100px;

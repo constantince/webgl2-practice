@@ -12,16 +12,16 @@
     <div class="ytd">2021/01/01</div>
     <div id="fps">0</div>
     <div id="selected">
-        <span>Click on graph for checking commits info:</span>
-        <span id="date-selected"></span>
+        <span>Clicking or Wheeling on graph for checking commits info:</span>
+        <p id="date-selected"></p>
     </div>
 </body>
-<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
-<script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
-<script src="../core/gl-matrix.js" type="text/javascript"></script>
-<script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
-<script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+<script src="../core/twgl-full.min.js" type="text/javascript"></script>
+<script src="../core/webgl-utils.js" type="text/javascript"></script>
+<script src="../core/m4.js" type="text/javascript"></script>
+<script src="../core/flattened-primitives.js"></script>
+<script src="../core/d3-color@3.js"></script>
+<script src="../core/common.use.js"></script>
 <script type="x-shader/x-vertex" id="vertex">#version 300 es
     in vec4 a_position;
     in vec4 a_color;
