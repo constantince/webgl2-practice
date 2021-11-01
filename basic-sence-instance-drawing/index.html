@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css" />
+    <title>BASIC SCENE</title>
+</head>
+<body onload="main()">
+    <canvas id="happy-life-happy-code"></canvas>
+</body>
+<script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js" type="text/javascript"></script>
+<script src="../core/gl-matrix.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/m4.js" type="text/javascript"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/flattened-primitives.js"></script>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    in vec4 a_color;
+    in vec4 a_normal;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    in mat4 a_world;
+    in mat4 a_normalMatrix;
+
+    uniform mat4 u_frame_projection;
+    uniform mat4 u_frame_view;
+    out vec4 v_color;
+    out vec4 v_worldPosition;
+    out vec3 v_normal;
+    out vec4 v_shadowPosition;
+    void main() {
+        gl_Position = u_projection * u_view * a_world * a_position;
+        v_worldPosition = a_world * a_position;
+        v_shadowPosition = u_frame_projection * u_frame_view * a_world * a_position;
+        v_normal = vec3(a_normalMatrix * a_normal);
+        v_color = a_color;
+    }
+</script>
+<script type="x-shader/x-fragment" id="frag">#version 300 es
+    precision mediump float;
+
+    in vec4 v_worldPosition;
+    in vec4 v_shadowPosition;
+    in vec3 v_normal;
+    in vec4 v_color;
+    
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform vec4 u_color;
+
+    // light
+    uniform vec3 u_ambientColor;
+    uniform float u_ambientM;
+
+    uniform vec3 u_lightSource;
+    uniform vec3 u_diffuseColor;
+    uniform float u_diffuseM;
+
+    uniform vec3 u_specularColor;
+    uniform float u_specularM;
+    uniform vec3 u_viewDirection;
+
+    uniform sampler2D u_texture;
+    uniform bool u_use_shadow;
+    uniform float u_innerLimit;
+    uniform float u_outerLimit;
+
+    uniform vec3 u_fogColor;
+    uniform float u_fogDensity;
+    out vec4 FragColor;
+
+    const float shiness = 240.0;
+    const float bias = 0.005;
+
+    float unpackDepth(vec4 rgbaDepth) {
+        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+        return dot(rgbaDepth, bitShift);
+    }
+
+    
+    void main() {
+        vec3 col = vec3(1.0);
+/*
+        vec3 position = v_worldPosition.xyz / v_worldPosition.w;
+        vec3 depth = (v_shadowPosition.xyz / v_shadowPosition.w) / 2.0 + 0.5;
+        vec3 normal = normalize(v_normal);
+
+        // light ambient
+        vec3 ambient = u_ambientColor * u_ambientM * u_color.rgb;
+        //light diffuse
+        vec3 lightDirection = normalize(u_lightSource - position);
+        float fDot = max(dot(normal, lightDirection), 0.0);
+        vec3 diffuse = u_diffuseColor * u_diffuseM * fDot * u_color.rgb;
+        // light specular
+        vec3 ref = normalize(reflect(normal, -lightDirection));
+        float sDot = max(dot(ref, -normalize(u_viewDirection)), 0.0);
+        float pows = pow(sDot, shiness);
+        vec3 specular = u_specularColor * u_specularM * pows * u_color.rgb;
+
+        vec4 shadowMap = texture(u_texture, depth.xy);
+        float cur = depth.z;
+
+        // 阴影抗锯齿
+        
+        float shadows = 0.0;
+        float opacity= .4;// 阴影alpha值, 值越小暗度越深
+        float texelSize= 1.0 / 2028.0;// 阴影像素尺寸,值越小阴影越逼真
+        vec4 rgbaDepth;
+        //  消除阴影边缘的锯齿 去平局差值四周围的
+        for(float y=-2.0; y <= 2.0; y++){
+            for(float x=-2.0; x <=2.0; x++){
+                rgbaDepth = texture(u_texture, depth.xy + vec2(x, y) * texelSize);
+                shadows += (depth.z - bias > rgbaDepth.r) ? 1.0 : 0.0;
+            }
+        }
+        shadows /= 9.0;// 4*4的样本
+        float visibility = min(opacity + (1.0 - shadows), 1.0); // 抗锯齿阴影
+        //visibility = u_use_shadow ? visibility : 1.0;
+        //float visibility = cur - bias > shadowMap.r ? 0.2 : 1.0;
+        float dotFromDirection = dot(lightDirection, position);
+        float limitRange = u_innerLimit - u_outerLimit;
+        float inLight = clamp((dotFromDirection - u_outerLimit) / limitRange, 0.3, 1.0);
+        float light = inLight * dot(normal, lightDirection);
+
+       
+
+        col = ambient + diffuse + specular;
+
+        #define LOG2 1.442695
+
+        // add fog
+        float fogDistance = length(position);
+        float fogAmount = 1. - exp2(-u_fogDensity * u_fogDensity * fogDistance * fogDistance * LOG2);
+        fogAmount = clamp(fogAmount, 0., 1.);
+
+        col = mix(col, u_fogColor, fogAmount);  
+        */
+
+        FragColor = v_color;
+    }
+</script>
+
+<script type="x-shader/x-vertex" id="frame-vertex">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+    }
+
+</script>
+
+<script type="x-shader/x-vertex" id="frame-frag">#version 300 es
+    precision mediump float;
+    out vec4 FragColor;
+
+    vec4 pack (float depth) {
+        // 使用rgba 4字节共32位来存储z值,1个字节精度为1/256
+        const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+        const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
+        // gl_FragCoord:片元的坐标,fract():返回数值的小数部分
+        vec4 rgbaDepth = fract(depth * bitShift); //计算每个点的z值 
+        rgbaDepth -= rgbaDepth.gbaa * bitMask; // Cut off the value which do not fit in 8 bits
+        return rgbaDepth;
+    }
+
+    void main() {
+       FragColor = pack(gl_FragCoord.z);
+    }
+
+</script>
+
+
+
+<script type="x-shader/x-vertex" id="click-vertex">#version 300 es
+    layout(location = 0) in vec4 a_position;
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    void main() {
+        gl_Position = u_projection * u_view * u_world * a_position;
+    }
+
+</script>
+
+<script type="x-shader/x-vertex" id="click-frag">#version 300 es
+    precision mediump float;
+    uniform vec4 u_id;
+    out vec4 FragColor;
+
+    void main() {
+       FragColor = u_id;
+    }
+
+</script>
+<script type="text/javascript" src="./index.js"></script>
+</html>

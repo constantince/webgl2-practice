@@ -332,22 +332,6 @@ function makeCover() {
 
 
 
-function createClock() {
-  var now = null, counts = 0;
-  var fps = document.getElementById("fps");
-  return function (gl) {
-    gl.finish();
-    counts++;
-    var _now = Date.now();
-    if (_now - now >= 1000) {
-      now = _now;
-      var n = counts;
-      counts = 0;
-      // console.log(n,' FPS');
-      fps.innerText = 'GPU: ' + n + ' fps';
-      return n;// return FPS counts
-    }
-  }
-}
+
 
 
