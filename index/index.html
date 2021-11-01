@@ -1,45 +1,216 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compositions</title>
-</head>
-<body>
-    <ul>
-        <li>
-            <a href="/dist/earth.html">Earth</a>
-        </li>
+<!DOCTYPE HTML>
+<!--
+  Verti by HTML5 UP
+  html5up.net | @n33co
+  Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+  <head>
+    <title>WebGL Samples</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/jquery.dropotron.min.js"></script>
+    <script src="./js/skel.min.js"></script>
+    <script src="./js/skel-layers.min.js"></script>
+    <script src="./js/init.js"></script>
+    <script id="sample-template" type="foo">
+            <div class="4u">
 
-        <li>
-            <a href="/dist/light.html">Light</a>
-        </li>
+              <!-- Box -->
+                <section class="box feature">
+                  <a href="%(url)s" class="image featured"><img src="%(img)s" alt="%(name)s" /></a>
+                  <div class="inner">
+                    <header>
+                      <h2><a href="%(url)s">%(name)s</a></h2>
+                    </header>
+                    <p><a href="%(link)s" target="_blank">%(desc)s</a></p>
+                  </div>
+                </section>
 
-        <li>
-            <a href="../load-obj-files/index.html">Tree</a>
-        </li>
+            </div>
+    </script>
+    <script>
+$(function() {
 
-        <li>
-            <a href="../appartment-balcony/index.html">Balcony</a>
-        </li>
+  /**
+   * Replace %(id)s in strings with values in objects(s)
+   *
+   * Given a string like `"Hello %(name)s from $(user.country)s"`
+   * and an object like `{name:"Joe",user:{country:"USA"}}` would
+   * return `"Hello Joe from USA"`.
+   *
+   * @function
+   * @param {string} str string to do replacements in
+   * @param {Object|Object[]} params one or more objects.
+   * @returns {string} string with replaced parts
+   * @memberOf module:Strings
+   */
+  var replaceParams = (function() {
+    var replaceParamsRE = /%\(([^\)]+)\)s/g;
 
-        <li>
-            <a href="../waving-flags/index.html">Flags</a>
-        </li>
+    return function(str, params) {
+      if (!params.length) {
+        params = [params];
+      }
 
-        <li>
-            <a href="/dist/solar-system.html">Solar system</a>
-        </li>
+      return str.replace(replaceParamsRE, function(match, key) {
+        var keys = key.split('.');
+        for (var ii = 0; ii < params.length; ++ii) {
+          var obj = params[ii];
+          for (var jj = 0; jj < keys.length; ++jj) {
+            var key = keys[jj]
+            var obj = obj[key];
+            if (obj === undefined) {
+              break;
+            }
+          }
+          if (obj !== undefined) {
+            return obj;
+          }
+        }
+        console.error("unknown key: " + key);
+        return "%(" + key + ")s";
+      });
+    };
+  }());
 
-        <li>
-            <a href="../basic-sence/index.html">Basic Sence</a>
-        </li>
+  var template = document.getElementById("sample-template").text;
 
-        <li>
-            <a href="../github-contributions-instance-drawing/index.html">Github Contribution</a>
-        </li>
-       
-    </ul>
-</body>
+  var html = [
+    { url: '/dist/light.html',
+      img: './imgs/light.png',
+      name: 'Basic light',
+      link: 'https://github.com/constantince/webgl2-practice/tree/master/github-contributions-instance-drawing',
+      desc: 'view source code',
+    },
+    { url: '/github-contributions-instance-drawing/index.html',
+      img: './imgs/github-contributions.png',
+      name: 'Github contributions',
+      
+      desc: '',
+    },
+    { url: '/basic-sence/index.html',
+      img: './imgs/basic-sence.png',
+      name: 'Basic sence movement',
+      
+      desc: '',
+    },
+
+    { url: '/dist/solar-system.html',
+      img: './imgs/solar-system.png',
+      name: 'Solar system',
+      
+      desc: '',
+    },
+
+    { url: '/dist/earth.html',
+      img: './imgs/earth.png',
+      name: 'Earth',
+      
+      desc: '',
+    },
+
+    { url: '/dist/sky-box.html',
+      img: './imgs/sky-box.png',
+      name: 'Sky box',
+      
+      desc: '',
+    },
+
+  ].map(function(sample, ndx) {
+    var col = ndx % 3;
+    return (col == 0 ? '<div class="row">' : "") +
+           replaceParams(template, [sample, {desc: "", by: ""}]) +
+           ((col == 2 || ndx == samples.length - 1) ? '</div>' : "");
+  }).join("\n");
+
+  $("#samples").html(html);
+});
+
+    </script>
+
+      <!-- <link rel="stylesheet" href="./css/skel.css" /> -->
+      <link rel="stylesheet" href="./css/style.css" />
+      <link rel="stylesheet" href="./css/style-desktop.css" />
+
+    <!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+  </head>
+  <body class="homepage">
+
+    <!-- Header -->
+      <div id="header-wrapper">
+        <header id="header" class="container">
+
+          <!-- Logo -->
+          <!-- Nav -->
+            <nav id="nav">
+              <ul>
+              </ul>
+            </nav>
+
+        </header>
+      </div>
+
+    <!-- Banner -->
+      <div id="banner-wrapper">
+        <div id="banner" class="box container">
+          <div class="row">
+            <div class="7u">
+              <h2>WebGL 实验室</h2>
+              <p>警告：该实验室充满着活跃的混合不稳定气体，需要在较新的谷歌浏览器中完成合成转换。否则将会产生视觉和精神污染！</p>
+            </div>
+            <div class="5u">
+              <ul>
+                <li><a href="https://www.cnblogs.com/constantince/" class="button big icon fa-arrow-circle-right">返回博客主页</a></li>
+                <li><a href="http://webglfundamentals.org" class="button alt big icon fa-question-circle">关于</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Features -->
+      <div id="features-wrapper">
+        <div id="samples" class="container">
+        </div>
+      </div>
+
+    <!-- Main -->
+
+    <!-- Footer -->
+      <div id="footer-wrapper">
+        <footer id="footer" class="container">
+          <div class="row">
+            <div class="9u">
+
+              <!-- Links -->
+                <section class="widget links">
+                  <h3>WebGL 学习资料</h3>
+                  <ul class="style2">
+                    <li><a href="http://webglfundamentals.org">WebGL Fundamentals (start here to learn WebGL)</a></li>
+                    <li><a href="http://threejs.org">Three.js (start here to get stuff done)</a></li>
+                    <li><a href="https://www.khronos.org/registry/webgl/specs/latest/1.0/">The WebGL Spec</a></li>
+                    <li><a href="https://www.khronos.org/webgl/wiki/Main_Page">The official WebGL Wiki</a></li>
+                  </ul>
+                </section>
+
+            </div>
+          </div>
+          <div class="row">
+            <div class="12u">
+              <div id="copyright">
+                <ul class="menu">
+                  <li>Design: <a href="http://html5up.net">Power UP By Webgl2</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+        <a href="https://github.com/constantince"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png"></a>
+  </body>
+<script src="//cdn.webglstats.com/stat.js" defer="defer" async="async"></script>
 </html>
